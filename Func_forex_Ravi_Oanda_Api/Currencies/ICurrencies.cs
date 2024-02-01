@@ -1,4 +1,4 @@
-namespace OANDA_Automation
+namespace Ravi.Oanda.Automation
 {
     public interface ICurrencies
     {

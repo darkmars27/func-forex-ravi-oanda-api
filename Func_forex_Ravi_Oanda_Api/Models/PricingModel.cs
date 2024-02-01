@@ -1,4 +1,4 @@
-namespace OANDA_Automation
+namespace Ravi.Oanda.Automation
 {
     using System;
     using System.Collections.Generic;

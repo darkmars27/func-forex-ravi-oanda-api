@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Func_forex_Ravi_Oanda_Api": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7208",
+      "launchBrowser": false
+    }
+  }
+}
