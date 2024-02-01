@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 namespace Ravi.Oanda.Automation
 {
     public interface ICurrencies

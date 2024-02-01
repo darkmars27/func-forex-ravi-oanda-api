@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+using System.Linq;
 namespace Ravi.Oanda.Automation
 {
     public class Currency:ICurrencies

@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "clean (functions)",
+      "label": "clean (Func_forex_Ravi_Oanda_Api)",
       "command": "dotnet",
       "args": [
         "clean",
@@ -12,11 +12,11 @@
       "type": "process",
       "problemMatcher": "$msCompile",
       "options": {
-        "cwd": "${workspaceFolder}/Functions"
+        "cwd": "${workspaceFolder}/Func_forex_Ravi_Oanda_Api"
       }
     },
     {
-      "label": "build (functions)",
+      "label": "build (Func_forex_Ravi_Oanda_Api)",
       "command": "dotnet",
       "args": [
         "build",
@@ -24,18 +24,18 @@
         "/consoleloggerparameters:NoSummary"
       ],
       "type": "process",
-      "dependsOn": "clean (functions)",
+      "dependsOn": "clean (Func_forex_Ravi_Oanda_Api)",
       "group": {
         "kind": "build",
         "isDefault": true
       },
       "problemMatcher": "$msCompile",
       "options": {
-        "cwd": "${workspaceFolder}/Functions"
+        "cwd": "${workspaceFolder}/Func_forex_Ravi_Oanda_Api"
       }
     },
     {
-      "label": "clean release (functions)",
+      "label": "clean release (Func_forex_Ravi_Oanda_Api)",
       "command": "dotnet",
       "args": [
         "clean",
@@ -47,11 +47,11 @@
       "type": "process",
       "problemMatcher": "$msCompile",
       "options": {
-        "cwd": "${workspaceFolder}/Functions"
+        "cwd": "${workspaceFolder}/Func_forex_Ravi_Oanda_Api"
       }
     },
     {
-      "label": "publish (functions)",
+      "label": "publish (Func_forex_Ravi_Oanda_Api)",
       "command": "dotnet",
       "args": [
         "publish",
@@ -61,17 +61,17 @@
         "/consoleloggerparameters:NoSummary"
       ],
       "type": "process",
-      "dependsOn": "clean release (functions)",
+      "dependsOn": "clean release (Func_forex_Ravi_Oanda_Api)",
       "problemMatcher": "$msCompile",
       "options": {
-        "cwd": "${workspaceFolder}/Functions"
+        "cwd": "${workspaceFolder}/Func_forex_Ravi_Oanda_Api"
       }
     },
     {
       "type": "func",
-      "dependsOn": "build (functions)",
+      "dependsOn": "build (Func_forex_Ravi_Oanda_Api)",
       "options": {
-        "cwd": "${workspaceFolder}/Functions/bin/Debug/net6.0"
+        "cwd": "${workspaceFolder}/Func_forex_Ravi_Oanda_Api/bin/Debug/net6.0"
       },
       "command": "host start",
       "isBackground": true,

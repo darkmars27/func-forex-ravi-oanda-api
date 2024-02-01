@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 namespace Ravi.Oanda.Automation
 {
     public class AccountModel

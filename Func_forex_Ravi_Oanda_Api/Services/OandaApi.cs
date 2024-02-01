@@ -1,6 +1,10 @@
+using System.Threading.Tasks;
+using System.Net.Http;
+using Newtonsoft.Json;
+using System;
 namespace Ravi.Oanda.Automation
 {
-    using Newtonsoft.Json;
+    
     public class OandaApi
     {
         
