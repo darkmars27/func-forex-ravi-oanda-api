@@ -111,7 +111,7 @@ namespace Ravi.Oanda.Automation
                 // ema5_crossed_ema20_from_below = true;
                 // ema20_crossed_ema50_from_below = true;
                 // ema5_crossed_ema50_from_below = true;
-
+                var leverage = 1 / decimal.Parse(accountDetail.account.marginRate);
                 if(ema5_crossed_ema20_from_below)
                 {
                     var orderRequest = new OrderRequest{
@@ -119,7 +119,7 @@ namespace Ravi.Oanda.Automation
                         {
                             type = "MARKET",
                             instrument = instrument_name,
-                            units = Convert.ToInt32((decimal.Parse(accountDetail.account.balance) * 50)/latestCandle.Ask.O),
+                            units = Convert.ToInt32((decimal.Parse(accountDetail.account.balance) * leverage) /latestCandle.Ask.O),
                             stopLossOnFill = new StopLossOnFill{
                                 price = (latestCandle.Ask.O - (pip * 10)).ToString()
                             }
@@ -128,9 +128,9 @@ namespace Ravi.Oanda.Automation
 
                     var orderPlaced = await oandaApi.PostOrderRequest(orderRequest);
                     if(orderPlaced)
-                        log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Placed");
+                        log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Placed at Bid({latestCandle.Bid.O}):Close{latestCandle.Mid.C}:Ask{latestCandle.Ask.O}, Units {orderRequest.order.units}");
                     else
-                        log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Place Failed");
+                        log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Place Failed at Bid({latestCandle.Bid.O}):Close{latestCandle.Mid.C}:Ask{latestCandle.Ask.O}, Units {orderRequest.order.units}");
                         
                     return await oandaApi.GetAccount();
                 }               
