@@ -111,7 +111,7 @@ namespace Ravi.Oanda.Automation
                 // ema5_crossed_ema20_from_below = true;
                 // ema20_crossed_ema50_from_below = true;
                 // ema5_crossed_ema50_from_below = true;
-                var leverage = 1 / decimal.Parse(accountDetail.account.marginRate);
+                var leverage = Convert.ToInt32(1 / decimal.Parse(accountDetail.account.marginRate));
                 if(ema5_crossed_ema20_from_below)
                 {
                     var orderRequest = new OrderRequest{
