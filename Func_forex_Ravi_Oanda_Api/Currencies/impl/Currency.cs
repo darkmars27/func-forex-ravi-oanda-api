@@ -1,10 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 namespace Ravi.Oanda.Automation
 {
     public class Currency:ICurrencies
     {
+        private readonly ILogger log;
         string instrument_name = "EUR_USD";
         decimal pip = 0.0001m;
         public decimal ema_5_previous, ema_5_current, ema_20_previous, ema_20_current,ema_50_previous, ema_50_current;
@@ -16,8 +18,9 @@ namespace Ravi.Oanda.Automation
         private bool ema20_crossed_ema50_from_below {get;set;}
         private bool ema5_crossed_ema50_from_above {get;set;}
         private bool ema5_crossed_ema50_from_below {get;set;}
-        public Currency(string instrument_name)
+        public Currency(ILogger log, string instrument_name)
         {
+            this.log = log;
             this.instrument_name = instrument_name;
             oandaApi = new OandaApi();
             formulas = new Formulas();
@@ -91,7 +94,7 @@ namespace Ravi.Oanda.Automation
             if(accountDetail.account.openTradeCount > 0)
             {
                 //ema20_crossed_ema50_from_above = true;
-                if (ema20_crossed_ema50_from_above)
+                if (ema5_crossed_ema20_from_above || ema5_crossed_ema50_from_above)
                 {
                     var tradeCloseRequest = new TradeCloseRequest{
                         units = "ALL"
@@ -125,14 +128,14 @@ namespace Ravi.Oanda.Automation
 
                     var orderPlaced = await oandaApi.PostOrderRequest(orderRequest);
                     if(orderPlaced)
-                        Console.WriteLine($"{System.DateTime.Now}: {instrument_name}: Trade Placed");
+                        log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Placed");
                     else
-                        Console.WriteLine($"{System.DateTime.Now}: {instrument_name}: Trade Place Failed");
+                        log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Place Failed");
                         
                     return await oandaApi.GetAccount();
                 }               
             }
-            Console.WriteLine($"{System.DateTime.Now}: {instrument_name}: Trade Skipped");
+            log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Skipped");
             return accountDetail;
         }
     }
