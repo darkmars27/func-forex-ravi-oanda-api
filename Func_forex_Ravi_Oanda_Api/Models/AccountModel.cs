@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-namespace Ravi.Oanda.Automation
+namespace Func_forex_Ravi_Oanda_Api.Models
 {
     public class AccountModel
     {

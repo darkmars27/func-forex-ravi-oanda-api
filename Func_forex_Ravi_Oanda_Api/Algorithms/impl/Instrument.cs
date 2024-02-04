@@ -1,10 +1,13 @@
-using System;
-using System.Threading.Tasks;
-using System.Linq;
+using Func_forex_Ravi_Oanda_Api.Currencies.Helpers;
+using Func_forex_Ravi_Oanda_Api.Models;
+using Func_forex_Ravi_Oanda_Api.Services.Impl;
 using Microsoft.Extensions.Logging;
-namespace Ravi.Oanda.Automation
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+namespace Func_forex_Ravi_Oanda_Api.Currencies.Impl
 {
-    public class Currency:ICurrencies
+    public class Instrument:IInstrument
     {
         private readonly ILogger log;
         string instrument_name = "EUR_USD";
@@ -18,11 +21,11 @@ namespace Ravi.Oanda.Automation
         private bool ema20_crossed_ema50_from_below {get;set;}
         private bool ema5_crossed_ema50_from_above {get;set;}
         private bool ema5_crossed_ema50_from_below {get;set;}
-        public Currency(ILogger log, string instrument_name)
+        public Instrument(ILogger log, string instrument_name, OandaApi oandaApi)
         {
             this.log = log;
             this.instrument_name = instrument_name;
-            oandaApi = new OandaApi();
+            this.oandaApi = oandaApi;
             formulas = new Formulas();
         }
         public async Task<PricingModel> GetLatestPricingWithHistory()
@@ -135,7 +138,7 @@ namespace Ravi.Oanda.Automation
                     return await oandaApi.GetAccount();
                 }               
             }
-            log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Skipped");
+            log.LogInformation($"{System.DateTime.Now}: {instrument_name}: Trade Skipped, EMA5/20/50 Previous:{ema_5_previous}/{ema_20_previous}/{ema_50_previous} Current: {ema_5_current}/{ema_20_current}/{ema_50_current}");
             return accountDetail;
         }
     }

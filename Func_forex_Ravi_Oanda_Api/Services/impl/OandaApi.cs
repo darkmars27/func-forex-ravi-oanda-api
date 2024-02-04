@@ -2,24 +2,22 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System;
-namespace Ravi.Oanda.Automation
+using Func_forex_Ravi_Oanda_Api.Models;
+using System.Linq;
+namespace Func_forex_Ravi_Oanda_Api.Services.Impl
 {
     
-    public class OandaApi
+    public class OandaApi : IOandaApi
     {
-        
         string accountId = "101-001-28144762-001";
         string granularity = "M15";
         string price = "AMB";
         bool smooth = false;
-        private HttpClient httpClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://api-fxpractice.oanda.com")
-        };
+        private readonly HttpClient httpClient;
 
-        public OandaApi()
+        public OandaApi(IHttpClientFactory httpClientFactory)
         {
-            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer a52d404534b4a81089f19de177b95086-20cb29411271c72665147a8863dcc742");
+            httpClient = httpClientFactory.CreateClient("OandaApiHttpClient");
         }
         public async Task<PricingModel> GetPriceHistory(string instrument_name)
         {
@@ -32,9 +30,11 @@ namespace Ravi.Oanda.Automation
             return pricingHistory;
         }
 
-        public async Task<PricingLatestModel> GetLatestPrice(string instrument_name)
+        public async Task<PricingLatestModel> GetLatestPrice(string[] instrument_names)
         {
-            string url = $"/v3/accounts/{accountId}/candles/latest?candleSpecifications={instrument_name}:{granularity}:{price}&smooth={smooth}";
+            instrument_names = instrument_names.Select(o => $"{o}:{granularity}:{price}").ToArray();
+            string candleSpecifications = string.Join(",", instrument_names);
+            string url = $"/v3/accounts/{accountId}/candles/latest?candleSpecifications={candleSpecifications}&smooth={smooth}";
             using HttpResponseMessage response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
