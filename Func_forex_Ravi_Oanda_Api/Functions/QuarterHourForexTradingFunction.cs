@@ -27,7 +27,7 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
         }
 
         [FunctionName("QuarterHourForexTradingFunction")]
-        public async Task Run([TimerTrigger("* */15 * * * *")] TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0 */15 * * * *")] TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
 
