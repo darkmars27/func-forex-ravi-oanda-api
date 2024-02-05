@@ -1,64 +1,44 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
 using Func_forex_Ravi_Oanda_Api.Functions;
 using Func_forex_Ravi_Oanda_Api.Maps;
 using Func_forex_Ravi_Oanda_Api.Models;
 using Func_forex_Ravi_Oanda_Api.Services;
-using Func_forex_Ravi_Oanda_Api.Services.impl;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 
 namespace Func_forex_Ravi_Oanda_Api.Functions
 {
-    public class RealTimeForexTradingFunction
+    public class QuarterHourForexTradingFunction
     {
-        private readonly ILogger<RealTimeForexTradingFunction> log;
+        private readonly ILogger<QuarterHourForexTradingFunction> log;
         private readonly IOandaApi oandaApi;
         private readonly BlobStorageTableHelpers tableHelpers;
 
 
-        public RealTimeForexTradingFunction(ILogger<RealTimeForexTradingFunction> log, IOandaApi oandaApi)
+        public QuarterHourForexTradingFunction(ILogger<QuarterHourForexTradingFunction> log, IOandaApi oandaApi)
         {
             this.log = log;
             this.oandaApi = oandaApi;
             tableHelpers = new BlobStorageTableHelpers();
         }
 
-        [FunctionName("RealTimeForexTradingFunction")]
+        [FunctionName("QuarterHourForexTradingFunction")]
         public async Task Run([TimerTrigger("* */15 * * * *")] TimerInfo myTimer, ILogger log)
         {
-            log.LogInformation($"RealTimeForexTradingFunction function executed at: {DateTime.Now}");
+            log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
 
             var accountDetail = await oandaApi.GetAccount();
-
-            // Sync EUR_USD
-
-            if (accountDetail.account.openTradeCount > 0)
+            var latesPrices = await oandaApi.GetLatestPrice(Constants.EUR_USD, Constants.AUD_USD, Constants.GBP_USD);
+            foreach (var instrument in latesPrices.LatestCandles)
             {
-                var open_trade_instrument_name = accountDetail.account.trades[0].instrument;
-                var instrument_latestPrice = await oandaApi.GetLatestPrice(open_trade_instrument_name);
-                if (instrument_latestPrice != null)
-                {
-                    var tableRows = instrument_latestPrice.TransformQuarterHourDataToFxCurrentTable(accountDetail.account);
-                    foreach(var row in tableRows)
-                    {
-                        var previous_14_rows = tableHelpers.GetPreviousEntity(row.PartitionKey, row.CurrencyDateTimeUTC.Value, 14);
-                        (row.RSI_14, row.Avg_Current_Gain_14, row.Avg_Current_Loss_14) = row.CalculateAlgorithms(previous_14_rows);
-                    }                 
-                }
+                var get_previous_rows = tableHelpers.GetPreviousEntities(instrument.Instrument, 50);
+                var tableData = instrument.TransformQuarterHourDataToFxCurrentTable(accountDetail.account, get_previous_rows);
+                await tableHelpers.UpsertEntityAsync(tableData);
             }
-            else
-            {
-
-            }
-
-
-
-                accountDetail = new Currency(log, "EUR_USD").GetLatestPrice_buy_sell(accountDetail).Result;
-            accountDetail = new Currency(log, "GBP_USD").GetLatestPrice_buy_sell(accountDetail).Result;
-            accountDetail = new Currency(log, "AUD_USD").GetLatestPrice_buy_sell(accountDetail).Result;
         }
     }
 }

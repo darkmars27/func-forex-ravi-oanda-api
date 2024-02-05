@@ -1,67 +1,94 @@
-using System;
-using System.Threading.Tasks;
 using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
-using Func_forex_Ravi_Oanda_Api.Functions;
 using Func_forex_Ravi_Oanda_Api.Maps;
 using Func_forex_Ravi_Oanda_Api.Models;
 using Func_forex_Ravi_Oanda_Api.Services;
-using Func_forex_Ravi_Oanda_Api.Services.impl;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Func_forex_Ravi_Oanda_Api.Functions
 {
-    public class QuarterHourForexTradingFunction
+    public class RealTimeForexTradingFunction
     {
-        private readonly ILogger<QuarterHourForexTradingFunction> log;
+        private readonly ILogger<RealTimeForexTradingFunction> log;
         private readonly IOandaApi oandaApi;
         private readonly BlobStorageTableHelpers tableHelpers;
 
-
-        public QuarterHourForexTradingFunction(ILogger<QuarterHourForexTradingFunction> log, IOandaApi oandaApi)
+        public RealTimeForexTradingFunction(ILogger<RealTimeForexTradingFunction> log, IOandaApi oandaApi)
         {
             this.log = log;
             this.oandaApi = oandaApi;
             tableHelpers = new BlobStorageTableHelpers();
         }
 
-        [FunctionName("QuarterHourForexTradingFunction")]
-        public async Task Run([TimerTrigger("5 */15 * * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("RealTimeForexTradingFunction")]
+        public async Task Run([TimerTrigger("*/10 * * * * *")] TimerInfo myTimer, ILogger log)
         {
-            log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
+            log.LogInformation($"RealTimeForexTradingFunction function executed at: {DateTime.Now}");
+
+            // Get UTC Time
+            var timeUtc = DateTime.UtcNow;
+            TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            DateTime easternTime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, easternZone);
+
             var accountDetail = await oandaApi.GetAccount();
-            var eurusd_latestPrice = await oandaApi.GetLatestPrice(Constants.EUR_USD);
-            var eurusd_tableData = eurusd_latestPrice.TransformRealTimeDataToFxCurrentTable(accountDetail.account);
+            var latesPrices = await oandaApi.GetLatestPrice(Constants.EUR_USD, Constants.AUD_USD, Constants.GBP_USD);
 
+            foreach (var instrument in latesPrices.LatestCandles)
+            {
+                var get_previous_rows = tableHelpers.GetPreviousEntities(instrument.Instrument, 50);
+                var latestData = instrument.TransformQuarterHourDataToFxCurrentTable(accountDetail.account, get_previous_rows);
 
+                var latest_current = latestData.OrderByDescending(o => o.CurrencyDateTimeUTC).FirstOrDefault();
 
-            var audusd_latestPrice = await oandaApi.GetLatestPrice(Constants.AUD_USD);
-            var gbpusd_latestPrice = await oandaApi.GetLatestPrice(Constants.GBP_USD);
+                if (accountDetail.account.openTradeCount > 0)
+                {
+                    var open_trade_instrument_name = accountDetail.account.trades[0].instrument;
+                    if (accountDetail.account.trades[0].instrument == latest_current.Instrument)
+                    {
+                        if (latest_current.EMA_5_Crossed_EMA_20_From_Above.Value || latest_current.RSI_14 >= 70 || easternTime.Hour == 7)
+                        {
+                            var tradeCloseRequest = new TradeCloseRequest
+                            {
+                                units = "ALL"
+                            };
+                            var tradeClosed = await oandaApi.PutCloseTradeRequest(tradeCloseRequest, accountDetail.account.trades[0].id);
+                            if (tradeClosed)
+                                log.LogInformation($"{instrument} trade closed");
+                            else
+                                log.LogError($"{instrument} trade close failed");
+                        }
+                    }
+                }
+                else
+                {
+                    if (latest_current.EMA_5_Crossed_EMA_20_From_Below.Value && latest_current.EMA_Diff_5_20_pips > 2 && latest_current.Spread < 2 && easternTime.Hour != 7)
+                    {
+                        decimal pip = 0.0001m;
+                        var orderRequest = new OrderRequest
+                        {
+                            order = new MarketOrder
+                            {
+                                type = "MARKET",
+                                instrument = latest_current.Instrument,
+                                units = Convert.ToInt32(decimal.Parse(accountDetail.account.balance) * latest_current.Leverage / latest_current.Ask_Close),
+                                stopLossOnFill = new StopLossOnFill
+                                {
+                                    price = (latest_current.Ask_Close - pip * 10).ToString()
+                                }
+                            }
+                        };
+                        var orderPlaced = await oandaApi.PostOrderRequest(orderRequest);
+                        if (orderPlaced)
+                            log.LogInformation($"{instrument} order placed");
+                        else
+                            log.LogError($"{instrument} order place failed");
+                    }
+                }
 
-
-
-            // Sync EUR_USD
-            // var accountDetail = await oandaApi.GetAccount();
-            //if (accountDetail.account.openTradeCount > 0)
-            //{
-            //    var open_trade_instrument_name = accountDetail.account.trades[0].instrument;
-            //    var instrument_latestPrice = await oandaApi.GetLatestPrice(open_trade_instrument_name);
-            //    if (instrument_latestPrice != null)
-            //    {
-            //        var tableData = instrument_latestPrice.TransformRealTimeDataToFxCurrentTable(accountDetail.account);
-            //    }
-            //}
-            //else
-            //{
-
-            //}
-
-
-
-            accountDetail = new Currency(log, "EUR_USD").GetLatestPrice_buy_sell(accountDetail).Result;
-            accountDetail = new Currency(log, "GBP_USD").GetLatestPrice_buy_sell(accountDetail).Result;
-            accountDetail = new Currency(log, "AUD_USD").GetLatestPrice_buy_sell(accountDetail).Result;
+            }
         }
     }
 }

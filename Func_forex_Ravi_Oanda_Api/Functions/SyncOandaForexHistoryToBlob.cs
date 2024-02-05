@@ -1,5 +1,6 @@
+using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
+using Func_forex_Ravi_Oanda_Api.Maps;
 using Func_forex_Ravi_Oanda_Api.Services;
-using Func_forex_Ravi_Oanda_Api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -8,11 +9,9 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using System.Linq;
-using Func_forex_Ravi_Oanda_Api.Maps;
-using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
 
 namespace Func_forex_Ravi_Oanda_Api.Functions
 {
@@ -29,7 +28,7 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
             tableHelpers = new BlobStorageTableHelpers();
         }
 
-        [FunctionName("AddInstrumentHistoryFunction")]
+        [FunctionName("SyncOandaForexHistoryToBlob")]
         [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         [OpenApiParameter(name: "instrument", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "Provide Instrument Name")]
@@ -37,23 +36,19 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "oanda/forex/history/sync")] HttpRequest req)
         {
-            log.LogInformation("AddInstrumentHistoryFunction function received an request.");
-            string name = req.Query["instrument"];
-
-            var priceHistory = await oandaApi.GetPriceHistory(Constants.EUR_USD);
+            log.LogInformation("SyncOandaForexHistoryToBlob function received an request.");
+            string[] instruments = req.Query["instrument"].ToString().Split(",");
             var accountDetail = await oandaApi.GetAccount();
-
-            if (priceHistory!= null && priceHistory.Candles != null && priceHistory.Candles.Any())
+            foreach (var instrument in instruments)
             {
-                var tableData = priceHistory.TransformHistDataToFxCurrentTable(accountDetail.account);
-                await tableHelpers.InsertEntityAsync(tableData);
-                return new OkObjectResult("done");
+                var priceHistory = await oandaApi.GetPriceHistory(instrument);
+                if (priceHistory != null && priceHistory.Candles != null && priceHistory.Candles.Any())
+                {
+                    var tableData = priceHistory.TransformHistDataToFxCurrentTable(accountDetail.account);
+                    await tableHelpers.InsertEntityAsync(tableData);
+                }
             }
-            else
-            {
-                return new OkObjectResult("no data found");
-            }
-            
+            return new OkObjectResult("done");
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             return pricingHistory;
         }
 
-        public async Task<PricingLatestModel> GetLatestPrice(string[] instrument_names)
+        public async Task<PricingLatestModel> GetLatestPrice(params string[] instrument_names)
         {
             instrument_names = instrument_names.Select(o => $"{o}:{granularity}:{price}").ToArray();
             string candleSpecifications = string.Join(",", instrument_names);

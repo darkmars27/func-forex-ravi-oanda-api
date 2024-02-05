@@ -1,6 +1,7 @@
 ﻿using Func_forex_Ravi_Oanda_Api.Currencies.Helpers;
 using Func_forex_Ravi_Oanda_Api.Models;
 using Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables;
+using Polly.Caching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,10 +24,11 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
                 var row = new FxCurrencyTable
                 {
                     PartitionKey = priceHistory.Instrument,
-                    RowKey = candle.Time.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss"),
+                    RowKey = (DateTime.MaxValue.Ticks - candle.Time.Ticks).ToString(),
                     Instrument = priceHistory.Instrument,
                     Granularity = priceHistory.Granularity,
                     CurrencyDateTimeUTC = candle.Time.ToUniversalTime(),
+                    CurrencyDateTimeEST = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(candle.Time.ToUniversalTime(), "Eastern Standard Time"),
                     Cash = account.balance,
                     Margin = account.marginRate,
                     Leverage = Convert.ToInt32(1 / decimal.Parse(account.marginRate)),
@@ -38,6 +40,7 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
                     Price_Low = candle.Mid.L,
                     Ask_Open = candle.Ask.O,
                     Ask_Close = candle.Ask.C,
+                    Spread = ((candle.Ask.C - candle.Bid.C) * 10000),
                     SMA_5 = Formulas.GetSMA(processedCandles, 5),
                     SMA_10 = Formulas.GetSMA(processedCandles, 10),
                     SMA_20 = Formulas.GetSMA(processedCandles, 20),
@@ -56,10 +59,14 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
                 response[i].EMA_20 = Formulas.GetEMA(previousRow.EMA_20 > 0 ? previousRow.EMA_20 : previousRow.SMA_20, currentRow.Price_Close, 20);
                 response[i].EMA_50 = Formulas.GetEMA(previousRow.EMA_50 > 0 ? previousRow.EMA_50 : previousRow.SMA_50, currentRow.Price_Close, 50);
 
+                response[i].EMA_Diff_5_20_pips = ((response[i].EMA_5 - response[i].EMA_20) * 10000);
+                response[i].EMA_Diff_5_50_pips = ((response[i].EMA_5 - response[i].EMA_50) * 10000);
+                response[i].EMA_Diff_20_50_pips = ((response[i].EMA_20 - response[i].EMA_50) * 10000);
+
                 if (previousRow.Avg_Current_Gain_14 == 0 || previousRow.Avg_Current_Loss_14 == 0)
-                    (response[i].RSI_14, response[i].Avg_Current_Gain_14, response[i].Avg_Current_Loss_14) = Formulas.GetRSI_AverageGainorLoss_14DayAvg(processedCandles, 14);
+                    (response[i].Avg_Current_Gain_14, response[i].Avg_Current_Loss_14) = Formulas.GetRSI_AverageGainorLoss_14DayAvg(response.Take(i+1).ToList(), 14);
                 else
-                    (response[i].RSI_14, response[i].Avg_Current_Gain_14, response[i].Avg_Current_Loss_14) = Formulas.GetRSI_AverageGainorLoss_PreviousRSI(processedCandles, previousRow, 14);
+                    (response[i].RSI_14, response[i].Avg_Current_Gain_14, response[i].Avg_Current_Loss_14) = Formulas.GetRSI_AverageGainorLoss_PreviousRSI(currentRow, previousRow, 14);
             }
             return response;
         }
