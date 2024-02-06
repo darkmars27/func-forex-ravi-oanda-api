@@ -39,6 +39,15 @@ namespace Func_forex_Ravi_Oanda_Api.Azure.BlobStorage
             }
         }
 
+        //public async Task UpdateEntityAsync(List<FxCurrencyTable> data)
+        //{
+        //    foreach (var row in data)
+        //    {
+        //        var dict = TransformToDIct(row);
+        //        await tableClient.UpdateEntityAsync(new TableEntity(dict));
+        //    }
+        //}
+
         public async Task UpsertEntityAsync(List<FxCurrencyTable> data)
         {
             foreach (var row in data)

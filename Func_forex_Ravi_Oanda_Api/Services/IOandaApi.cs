@@ -14,5 +14,6 @@ namespace Func_forex_Ravi_Oanda_Api.Services
         Task<AccountModel> GetAccount();
         Task<bool> PostOrderRequest(OrderRequest orderRequest);
         Task<bool> PutCloseTradeRequest(TradeCloseRequest tradeCloseRequest, string tradeId);
+        Task<MarketOrders> GetFilledMarketOrders(string instrument);
     }
 }

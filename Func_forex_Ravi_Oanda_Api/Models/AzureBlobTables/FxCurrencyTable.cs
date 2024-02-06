@@ -40,11 +40,16 @@ namespace Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables
         public decimal EMA_50 { get; set; }    
         public bool? EMA_5_Crossed_EMA_20_From_Below { get; set; }
         public bool? EMA_5_Crossed_EMA_20_From_Above { get; set; }
+        public DateTimeOffset? EMA_5_Crossed_EMA_20_From_Below_Dt { get; set; }
+        public bool? EMA_20_Crossed_EMA_50_From_Below { get; set; }
+        public bool? EMA_20_Crossed_EMA_50_From_Above { get; set; }
+        public DateTimeOffset? EMA_20_Crossed_EMA_50_From_Below_Dt { get; set; }
         public decimal EMA_Diff_5_20_pips { get; set; }
         public decimal EMA_Diff_20_50_pips { get; set; }
         public decimal EMA_Diff_5_50_pips { get; set; }
         public decimal RSI_14 { get; set; }
         public decimal Avg_Current_Gain_14 { get; set; }
         public decimal Avg_Current_Loss_14 { get; set; }
+        public DateTimeOffset? lastBuyTime { get; set; }
     }   
 }

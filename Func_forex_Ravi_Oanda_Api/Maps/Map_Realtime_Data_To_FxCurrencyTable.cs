@@ -72,10 +72,13 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
 
                 historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Below = historicalPrices[ex_rk_index - 1].EMA_5_Crossed_EMA_20_From_Below;
                 historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Above = historicalPrices[ex_rk_index - 1].EMA_5_Crossed_EMA_20_From_Above;
+                historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Below = historicalPrices[ex_rk_index - 1].EMA_20_Crossed_EMA_50_From_Below;
+                historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Above = historicalPrices[ex_rk_index - 1].EMA_20_Crossed_EMA_50_From_Above;
 
                 if (currentRow.EMA_5 > currentRow.EMA_20 && previousRow.EMA_5 < previousRow.EMA_20)
                 {
                     historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Below = true;
+                    historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Below_Dt = candle.Time.ToUniversalTime();
                     historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Above = false;
                 }
 
@@ -83,6 +86,19 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
                 {
                     historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Below = false;
                     historicalPrices[ex_rk_index].EMA_5_Crossed_EMA_20_From_Above = true;
+                }
+
+                if (currentRow.EMA_20 > currentRow.EMA_50 && previousRow.EMA_20 < previousRow.EMA_50)
+                {
+                    historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Below = true;
+                    historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Below_Dt = candle.Time.ToUniversalTime();
+                    historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Above = false;
+                }
+
+                if (currentRow.EMA_20 < currentRow.EMA_50 && previousRow.EMA_20 > previousRow.EMA_50)
+                {
+                    historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Below = false;                    
+                    historicalPrices[ex_rk_index].EMA_20_Crossed_EMA_50_From_Above = true;
                 }
 
                 response.Add(historicalPrices[ex_rk_index]);

@@ -48,7 +48,7 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
                     var open_trade_instrument_name = accountDetail.account.trades[0].instrument;
                     if (accountDetail.account.trades[0].instrument == latest_current.Instrument)
                     {
-                        if (latest_current.EMA_5_Crossed_EMA_20_From_Above.Value || latest_current.RSI_14 >= 70 || easternTime.Hour == 7)
+                        if (latest_current.EMA_5_Crossed_EMA_20_From_Above.Value || latest_current.RSI_14 > 70 || easternTime.Hour == 7)
                         {
                             var tradeCloseRequest = new TradeCloseRequest
                             {
@@ -56,7 +56,10 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
                             };
                             var tradeClosed = await oandaApi.PutCloseTradeRequest(tradeCloseRequest, accountDetail.account.trades[0].id);
                             if (tradeClosed)
+                            {
                                 log.LogInformation($"{instrument} trade closed");
+
+                            }
                             else
                                 log.LogError($"{instrument} trade close failed");
                         }
@@ -64,27 +67,45 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
                 }
                 else
                 {
-                    if (latest_current.EMA_5_Crossed_EMA_20_From_Below.Value && latest_current.EMA_Diff_5_20_pips > 2 && latest_current.Spread < 2 && easternTime.Hour != 7)
+                    if (latest_current.EMA_5_Crossed_EMA_20_From_Below.Value && 
+                        latest_current.EMA_20_Crossed_EMA_50_From_Below.Value &&
+                        latest_current.EMA_Diff_5_20_pips > 3 && latest_current.Spread < 3 && easternTime.Hour != 7)
                     {
-                        decimal pip = 0.0001m;
-                        var orderRequest = new OrderRequest
+                        bool skipMarketOrder = false;
+                        var filledMarketOrders = await oandaApi.GetFilledMarketOrders(instrument.Instrument);
+                        if(filledMarketOrders != null && filledMarketOrders.orders != null && filledMarketOrders.orders.Any())
                         {
-                            order = new MarketOrder
+                            if(filledMarketOrders.orders.Any(o => o.createTime > latest_current.EMA_5_Crossed_EMA_20_From_Below_Dt))
                             {
-                                type = "MARKET",
-                                instrument = latest_current.Instrument,
-                                units = Convert.ToInt32(decimal.Parse(accountDetail.account.balance) * latest_current.Leverage / latest_current.Ask_Close),
-                                stopLossOnFill = new StopLossOnFill
-                                {
-                                    price = (latest_current.Ask_Close - pip * 10).ToString()
-                                }
+                                skipMarketOrder = true;
                             }
-                        };
-                        var orderPlaced = await oandaApi.PostOrderRequest(orderRequest);
-                        if (orderPlaced)
-                            log.LogInformation($"{instrument} order placed");
+                        }
+
+                        if (skipMarketOrder)
+                        {
+                            decimal pip = 0.0001m;
+                            var orderRequest = new OrderRequest
+                            {
+                                order = new MarketOrder
+                                {
+                                    type = "MARKET",
+                                    instrument = latest_current.Instrument,
+                                    units = Convert.ToInt32(decimal.Parse(accountDetail.account.balance) * latest_current.Leverage / latest_current.Ask_Close),
+                                    stopLossOnFill = new StopLossOnFill
+                                    {
+                                        price = (latest_current.Ask_Close - pip * 10).ToString()
+                                    }
+                                }
+                            };
+                            var orderPlaced = await oandaApi.PostOrderRequest(orderRequest);
+                            if (orderPlaced)
+                                log.LogInformation($"{instrument} order placed");
+                            else
+                                log.LogError($"{instrument} order place failed");
+                        }
                         else
-                            log.LogError($"{instrument} order place failed");
+                            log.LogError($"{instrument} order place skipped as order was already placed earlier and closed");
+
                     }
                 }
 

@@ -75,5 +75,19 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             else
                 return false;
         }
+
+        public async Task<MarketOrders> GetFilledMarketOrders(string instrument)
+        {
+            string url = $"/v3/accounts/{accountId}/orders?state=ALL&instrument={instrument}&count=10";
+            using HttpResponseMessage response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            //Console.WriteLine(jsonResponse);
+            var marketOrders = JsonConvert.DeserializeObject<MarketOrders>(jsonResponse);
+            if(marketOrders != null && marketOrders.orders != null && marketOrders.orders.Any())
+                marketOrders.orders = marketOrders.orders.Where(o => o.type == "MARKET" && o.state == "FILLED").ToList();
+
+            return marketOrders;
+        }
     }
 }
