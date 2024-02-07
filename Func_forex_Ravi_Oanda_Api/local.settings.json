@@ -6,8 +6,10 @@
 		"FUNCTIONS_WORKER_RUNTIME": "dotnet",
 		"OandaApi_BaseUrl": "https://api-fxpractice.oanda.com",
 		"OandaApi_DemoKey": "Bearer a52d404534b4a81089f19de177b95086-20cb29411271c72665147a8863dcc742",
-		//"AzureWebJobs.QuarterHourForexTradingFunction.Disabled": true,
-		"AzureWebJobs.RealTimeForexTradingFunction.Disabled": true
+		"AzureWebJobs.FiveMinForexTradingFunction.Disabled": true,
+		"AzureWebJobs.QuarterHourForexTradingFunction.Disabled": true,
+		"AzureWebJobs.RealTime15MinDataTradingFunction.Disabled": true,
+		"AzureWebJobs.RealTime5MinDataTradingFunction.Disabled": true
 	},
 	"Host": {
 		"LocalHttpPort": 7071,

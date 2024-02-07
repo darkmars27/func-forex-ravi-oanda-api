@@ -97,11 +97,11 @@
               "type": "Microsoft.ApiManagement/service/apis",
               "name": "FuncforexRaviOandaApiMgmtSvc/FuncforexRaviOandaApi",
               "properties": {
-                "displayName": "FuncforexRaviOandaApi",
+                "displayName": "OpenAPI Document on Azure Functions",
                 "apiRevision": "1",
                 "description": null,
                 "subscriptionRequired": true,
-                "serviceUrl": null,
+                "serviceUrl": "https://func-ravi-oanda-fx-api.azurewebsites.net/api",
                 "path": "",
                 "protocols": [
                   "https"

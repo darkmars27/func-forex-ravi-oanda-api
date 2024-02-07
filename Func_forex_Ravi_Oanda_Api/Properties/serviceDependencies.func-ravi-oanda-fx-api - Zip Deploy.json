@@ -3,6 +3,11 @@
     "apis1": {
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/FuncforexRaviOandaApiMgmtSvc/apis/FuncforexRaviOandaApi",
       "type": "apis.azure"
+    },
+    "storage1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/stgforexdata",
+      "type": "storage.azure",
+      "connectionId": "AzureWebJobsStorage"
     }
   }
 }

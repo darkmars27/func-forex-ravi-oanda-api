@@ -9,10 +9,13 @@ namespace Func_forex_Ravi_Oanda_Api.Services
 {
     public interface IOandaApi
     {
-        Task<PricingModel> GetPriceHistory(string instrument_name);
-        Task<PricingLatestModel> GetLatestPrice(params string[] instrument_names);
+        Task<PricingModel> GetPriceHistory5Min(string instrument_name);
+        Task<PricingModel> GetPriceHistory15Min(string instrument_name);
+        Task<PricingLatestModel> GetLatestPrice5Min(params string[] instrument_names);
+        Task<PricingLatestModel> GetLatestPrice15Min(params string[] instrument_names);
         Task<AccountModel> GetAccount();
-        Task<bool> PostOrderRequest(OrderRequest orderRequest);
+        Task<MarketOrderResponse> PostMarketOrderRequest(MarketOrderRequest orderRequest);
+        Task<bool> PostTrailingStopLossRequest(TrailingStopLossRequest orderRequest);
         Task<bool> PutCloseTradeRequest(TradeCloseRequest tradeCloseRequest, string tradeId);
         Task<MarketOrders> GetFilledMarketOrders(string instrument);
     }

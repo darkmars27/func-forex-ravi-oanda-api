@@ -1,4 +1,5 @@
 ﻿using Azure.Data.Tables;
+using Func_forex_Ravi_Oanda_Api.Helpers;
 using Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables;
 using System;
 using System.Collections.Generic;
@@ -7,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace Func_forex_Ravi_Oanda_Api.Azure.BlobStorage
 {
-    public class BlobStorageTableHelpers
+    public class FxCurrencyTableHelpers
     {
         private TableClient tableClient { get; set; }
-        private readonly string tableName = "oandaforexdatademo";
-        public BlobStorageTableHelpers()
+        //private readonly string tableName = "oandaforexdatademo";
+        public FxCurrencyTableHelpers(string tableName)
         {
             //var storageAccount = CloudStorageAccount.Parse(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
             tableClient = new TableClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"), tableName);
@@ -59,6 +60,9 @@ namespace Func_forex_Ravi_Oanda_Api.Azure.BlobStorage
 
         public Dictionary<string, object> TransformToDIct(FxCurrencyTable row)
         {
+            var minDateTime = new DateTime(1999, 01, 01, 0, 0, 0);
+            minDateTime = DateTime.SpecifyKind(minDateTime, DateTimeKind.Utc);
+            DateTimeOffset minDtOffset = minDateTime;
             var rowDict = new Dictionary<string, object>
                 {
                     {"PartitionKey", row.PartitionKey },
@@ -81,20 +85,33 @@ namespace Func_forex_Ravi_Oanda_Api.Azure.BlobStorage
                     {"Spread", row.Spread.ToString("0.00")},
                     {"SMA_5", row.SMA_5.ToString()},
                     {"SMA_10", row.SMA_10.ToString()},
+                    {"SMA_12", row.SMA_12.ToString()},
                     {"SMA_20", row.SMA_20.ToString()},
+                    {"SMA_26", row.SMA_26.ToString()},
                     {"SMA_50", row.SMA_50.ToString()},
                     {"EMA_5", row.EMA_5.ToString()},
                     {"EMA_10", row.EMA_10.ToString()},
+                    {"EMA_12", row.EMA_12.ToString()},
                     {"EMA_20", row.EMA_20.ToString()},
+                    {"EMA_26", row.EMA_26.ToString()},
                     {"EMA_50", row.EMA_50.ToString()},
                     {"EMA_Diff_5_20_pips", row.EMA_Diff_5_20_pips.ToString("0.00")},
                     {"EMA_Diff_20_50_pips", row.EMA_Diff_20_50_pips.ToString("0.00")},
                     {"EMA_Diff_5_50_pips", row.EMA_Diff_5_50_pips.ToString("0.00")},
+                    {"MACD_EMA12_EMA16_DIFF", row.MACD_EMA12_EMA16_DIFF.ToString("0.0000000")},
                     {"RSI_14", row.RSI_14.ToString()},
                     {"Avg_Current_Gain_14", row.Avg_Current_Gain_14.ToString()},
                     {"Avg_Current_Loss_14", row.Avg_Current_Loss_14.ToString()},
                     {"EMA_5_Crossed_EMA_20_From_Below", row.EMA_5_Crossed_EMA_20_From_Below.HasValue ? row.EMA_5_Crossed_EMA_20_From_Below.Value : false},
                     {"EMA_5_Crossed_EMA_20_From_Above", row.EMA_5_Crossed_EMA_20_From_Above.HasValue ? row.EMA_5_Crossed_EMA_20_From_Above.Value : false},
+                    {"EMA_5_Crossed_EMA_20_From_Below_Dt", row.EMA_5_Crossed_EMA_20_From_Below_Dt.HasValue ? row.EMA_5_Crossed_EMA_20_From_Below_Dt.Value.ToString("yyyy-MM-ddTHH:mm:ss") : minDtOffset.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")},
+                    {"EMA_12_Crossed_EMA_26_From_Below", row.EMA_12_Crossed_EMA_26_From_Below.HasValue ? row.EMA_12_Crossed_EMA_26_From_Below.Value : false},
+                    {"EMA_12_Crossed_EMA_26_From_Above", row.EMA_12_Crossed_EMA_26_From_Above.HasValue ? row.EMA_12_Crossed_EMA_26_From_Above.Value : false},
+                    {"EMA_12_Crossed_EMA_26_From_Below_Dt", row.EMA_12_Crossed_EMA_26_From_Below_Dt.HasValue ? row.EMA_12_Crossed_EMA_26_From_Below_Dt.Value.ToString("yyyy-MM-ddTHH:mm:ss") : minDtOffset.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")},
+                    {"EMA_20_Crossed_EMA_50_From_Below", row.EMA_20_Crossed_EMA_50_From_Below.HasValue ? row.EMA_20_Crossed_EMA_50_From_Below.Value : false},
+                    {"EMA_20_Crossed_EMA_50_From_Above", row.EMA_20_Crossed_EMA_50_From_Above.HasValue ? row.EMA_20_Crossed_EMA_50_From_Above.Value : false},
+                    {"EMA_20_Crossed_EMA_50_From_Below_Dt", row.EMA_20_Crossed_EMA_50_From_Below_Dt.HasValue ? row.EMA_20_Crossed_EMA_50_From_Below_Dt.Value.ToString("yyyy-MM-ddTHH:mm:ss") : minDtOffset.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")},
+                    {"lastBuyTime", row.lastBuyTime.HasValue ? row.lastBuyTime.Value.ToString("yyyy-MM-ddTHH:mm:ss") : null},
                 };
             return rowDict;
         }
@@ -125,20 +142,33 @@ namespace Func_forex_Ravi_Oanda_Api.Azure.BlobStorage
                 Spread = decimal.Parse(record.GetString("Spread")),
                 SMA_5 = decimal.Parse(record.GetString("SMA_5")),
                 SMA_10 = decimal.Parse(record.GetString("SMA_10")),
+                SMA_12 = record.GetString("SMA_12").ConvertToDecimal(),
                 SMA_20 = decimal.Parse(record.GetString("SMA_20")),
+                SMA_26 = record.GetString("SMA_26").ConvertToDecimal(),
                 SMA_50 = decimal.Parse(record.GetString("SMA_50")),
                 EMA_5 = decimal.Parse(record.GetString("EMA_5")),
                 EMA_10 = decimal.Parse(record.GetString("EMA_10")),
+                EMA_12 = record.GetString("EMA_12").ConvertToDecimal(),
                 EMA_20 = decimal.Parse(record.GetString("EMA_20")),
+                EMA_26 = record.GetString("EMA_26").ConvertToDecimal(),
                 EMA_50 = decimal.Parse(record.GetString("EMA_50")),
                 EMA_Diff_5_20_pips = decimal.Parse(record.GetString("EMA_Diff_5_20_pips")),
                 EMA_Diff_20_50_pips = decimal.Parse(record.GetString("EMA_Diff_20_50_pips")),
                 EMA_Diff_5_50_pips = decimal.Parse(record.GetString("EMA_Diff_5_50_pips")),
+                MACD_EMA12_EMA16_DIFF = record.GetString("MACD_EMA12_EMA16_DIFF").ConvertToDecimal(),
                 RSI_14 = decimal.Parse(record.GetString("RSI_14")),
                 Avg_Current_Gain_14 = decimal.Parse(record.GetString("Avg_Current_Gain_14")),
                 Avg_Current_Loss_14 = decimal.Parse(record.GetString("Avg_Current_Loss_14")),
                 EMA_5_Crossed_EMA_20_From_Above = record.GetBoolean("EMA_5_Crossed_EMA_20_From_Above"),
-                EMA_5_Crossed_EMA_20_From_Below = record.GetBoolean("EMA_5_Crossed_EMA_20_From_Below")
+                EMA_5_Crossed_EMA_20_From_Below = record.GetBoolean("EMA_5_Crossed_EMA_20_From_Below"),
+                EMA_5_Crossed_EMA_20_From_Below_Dt = record.GetString("EMA_5_Crossed_EMA_20_From_Below_Dt").ConvertToDateTimeOffset(),
+                EMA_12_Crossed_EMA_26_From_Above = record.GetBoolean("EMA_12_Crossed_EMA_26_From_Above"),
+                EMA_12_Crossed_EMA_26_From_Below = record.GetBoolean("EMA_12_Crossed_EMA_26_From_Below"),
+                EMA_12_Crossed_EMA_26_From_Below_Dt = record.GetString("EMA_12_Crossed_EMA_26_From_Below_Dt").ConvertToDateTimeOffset(),
+                EMA_20_Crossed_EMA_50_From_Below = record.GetBoolean("EMA_20_Crossed_EMA_50_From_Below"),
+                EMA_20_Crossed_EMA_50_From_Above = record.GetBoolean("EMA_20_Crossed_EMA_50_From_Above"),
+                EMA_20_Crossed_EMA_50_From_Below_Dt = record.GetString("EMA_20_Crossed_EMA_50_From_Below_Dt").ConvertToDateTimeOffset(),
+                lastBuyTime = record.GetString("lastBuyTime").ConvertToDateTimeOffset()
             };
             return table;
         }

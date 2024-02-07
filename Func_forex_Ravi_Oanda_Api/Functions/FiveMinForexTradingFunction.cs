@@ -12,29 +12,29 @@ using Microsoft.Extensions.Logging;
 
 namespace Func_forex_Ravi_Oanda_Api.Functions
 {
-    public class QuarterHourForexTradingFunction
+    public class FiveMinForexTradingFunction
     {
-        private readonly ILogger<QuarterHourForexTradingFunction> log;
+        private readonly ILogger<FiveMinForexTradingFunction> log;
         private readonly IOandaApi oandaApi;
         private readonly FxCurrencyTableHelpers tableHelpers;
 
 
-        public QuarterHourForexTradingFunction(ILogger<QuarterHourForexTradingFunction> log, IOandaApi oandaApi)
+        public FiveMinForexTradingFunction(ILogger<FiveMinForexTradingFunction> log, IOandaApi oandaApi)
         {
             this.log = log;
             this.oandaApi = oandaApi;
-            tableHelpers = new FxCurrencyTableHelpers("oandaforexdatademo");
+            tableHelpers = new FxCurrencyTableHelpers("oandaforexfivemindatademo");
         }
 
-        [FunctionName("QuarterHourForexTradingFunction")]
+        [FunctionName("FiveMinForexTradingFunction")]
         public async Task Run([TimerTrigger("0 */15 * * * *")] TimerInfo myTimer, ILogger log)
         {
             try
             {
-                log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
+                log.LogInformation($"FiveMinForexTradingFunction function executed at: {DateTime.Now}");
 
                 var accountDetail = await oandaApi.GetAccount();
-                var latesPrices = await oandaApi.GetLatestPrice15Min(Constants.EUR_USD, Constants.AUD_USD, Constants.GBP_USD);
+                var latesPrices = await oandaApi.GetLatestPrice5Min(Constants.EUR_USD, Constants.AUD_USD, Constants.GBP_USD);
                 foreach (var instrument in latesPrices.LatestCandles)
                 {
                     var get_previous_rows = tableHelpers.GetPreviousEntities(instrument.Instrument, 50);
@@ -44,7 +44,7 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
             }
             catch (Exception ex)
             {
-                log.LogError($"QuarterHourForexTradingFunction failed with error : {ex.ToString()}");
+                log.LogError($"FiveMinForexTradingFunction failed with error : {ex.ToString()}");
             }
         }
     }
