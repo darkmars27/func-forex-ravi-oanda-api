@@ -14,9 +14,10 @@ namespace Func_forex_Ravi_Oanda_Api.Services
         Task<PricingLatestModel> GetLatestPrice5Min(params string[] instrument_names);
         Task<PricingLatestModel> GetLatestPrice15Min(params string[] instrument_names);
         Task<AccountModel> GetAccount();
-        Task<MarketOrderResponse> PostMarketOrderRequest(MarketOrderRequest orderRequest);
-        Task<bool> PostTrailingStopLossRequest(TrailingStopLossRequest orderRequest);
-        Task<bool> PutCloseTradeRequest(TradeCloseRequest tradeCloseRequest, string tradeId);
+        Task<AccountInstrumentDetail> GetAccountInstrumentDetails(params string[] instruments);
+        Task<string> PostMarketOrderRequest(string instrument_name, string cash, int leverage, decimal ask_close);
+        Task<bool> PostTrailingStopLossRequest(string instrument_name, string tradeId);
+        Task<bool> PutCloseTradeRequest(string instrument_name, string tradeId);
         Task<MarketOrders> GetFilledMarketOrders(string instrument);
     }
 }

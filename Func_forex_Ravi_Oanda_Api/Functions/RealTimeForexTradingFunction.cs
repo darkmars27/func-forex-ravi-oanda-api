@@ -10,25 +10,27 @@
 
 //namespace Func_forex_Ravi_Oanda_Api.Functions
 //{
-//    public class RealTime15MinDataTradingFunction
+//    public class RealTimeForexTradingFunction
 //    {
-//        private readonly ILogger<RealTime15MinDataTradingFunction> log;
+//        private readonly ILogger<RealTimeForexTradingFunction> log;
 //        private readonly IOandaApi oandaApi;
 //        private readonly FxCurrencyTableHelpers table_15min_data;
+//        private readonly FxCurrencyTableHelpers table_5min_data;
 
-//        public RealTime15MinDataTradingFunction(ILogger<RealTime15MinDataTradingFunction> log, IOandaApi oandaApi)
+//        public RealTimeForexTradingFunction(ILogger<RealTimeForexTradingFunction> log, IOandaApi oandaApi)
 //        {
 //            this.log = log;
 //            this.oandaApi = oandaApi;
 //            table_15min_data = new FxCurrencyTableHelpers("oandaforexdatademo");
+//            table_15min_data = new FxCurrencyTableHelpers("oandaforexfivemindatademo");
 //        }
 
-//        [FunctionName("RealTime15MinDataTradingFunction")]
+//        [FunctionName("RealTimeForexTradingFunction")]
 //        public async Task Run([TimerTrigger("*/10 * * * * *")] TimerInfo myTimer, ILogger log)
 //        {
 //            try
 //            {
-//                log.LogInformation($"RealTime15MinDataTradingFunction function executed at: {DateTime.Now}");
+//                log.LogInformation($"RealTimeForexTradingFunction function executed at: {DateTime.Now}");
 
 //                // Get UTC Time
 //                var timeUtc = DateTime.UtcNow;
@@ -36,9 +38,8 @@
 //                DateTime easternTime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, easternZone);
 
 //                var accountDetail = await oandaApi.GetAccount();
-//                var latesPrices = await oandaApi.GetLatestPrice15Min(Constants.EUR_USD);
+//                var latesPrices = await oandaApi.GetLatestPrice15Min(Constants.EUR_USD, Constants.AUD_USD, Constants.GBP_USD);
 
-                
 //                foreach (var instrument in latesPrices.LatestCandles)
 //                {
 //                    var get_previous_rows = table_15min_data.GetPreviousEntities(instrument.Instrument, 50);
@@ -60,11 +61,11 @@
 //                                var tradeClosed = await oandaApi.PutCloseTradeRequest(tradeCloseRequest, accountDetail.account.trades[0].id);
 //                                if (tradeClosed)
 //                                {
-//                                    log.LogInformation($"{instrument.Instrument} trade closed");
+//                                    log.LogInformation($"{instrument} trade closed");
 
 //                                }
 //                                else
-//                                    log.LogError($"{instrument.Instrument} trade close failed");
+//                                    log.LogError($"{instrument} trade close failed");
 //                            }
 //                        }
 //                    }
@@ -84,7 +85,7 @@
 //                                }
 //                            }
 
-//                            if (!skipMarketOrder)
+//                            if (skipMarketOrder)
 //                            {
 //                                decimal pip = 0.0001m;
 //                                var orderRequest = new MarketOrderRequest
@@ -105,7 +106,7 @@
 //                                {
 //                                    if (!string.IsNullOrEmpty(orderPlaced.orderFillTransaction?.id))
 //                                    {
-//                                        log.LogInformation($"{instrument.Instrument} order placed, Trade ID: {orderPlaced.orderFillTransaction?.id}");
+//                                        log.LogInformation($"{instrument} order placed, Trade ID: {orderPlaced.orderFillTransaction?.id}");
 //                                        var trailingStopOrderRequest = new TrailingStopLossRequest
 //                                        {
 //                                            order = new TrailingStopLossRequestOrder
@@ -120,14 +121,12 @@
 //                                        if(trailingStoporderPlaced)
 //                                            log.LogInformation($"{instrument} trailing stop order placed");
 //                                    }
-//                                    else
-//                                        log.LogError($"{instrument.Instrument} order fill failed");
 //                                }
 //                                else
-//                                    log.LogError($"{instrument.Instrument} order place failed");
+//                                    log.LogError($"{instrument} order place failed");
 //                            }
 //                            else
-//                                log.LogError($"{instrument.Instrument} order place skipped as order was already placed earlier and closed");
+//                                log.LogError($"{instrument} order place skipped as order was already placed earlier and closed");
 
 //                        }
 //                    }
@@ -135,7 +134,7 @@
 //            }
 //            catch (Exception ex)
 //            {
-//                log.LogError($"RealTime15MinDataTradingFunction failed with error : {ex.ToString()}");
+//                log.LogError($"RealTimeForexTradingFunction failed with error : {ex.ToString()}");
 //            }
 //        }
 //    }

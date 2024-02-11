@@ -32,32 +32,27 @@ namespace Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables
         public decimal Spread { get; set; }
         public decimal SMA_5 { get; set; }        
         public decimal SMA_10 { get; set; }
-        public decimal SMA_12 { get; set; }
-        public decimal SMA_20 { get; set; }
-        public decimal SMA_26 { get; set; }
         public decimal SMA_50 { get; set; }
         public decimal EMA_5 { get; set; }
         public decimal EMA_10 { get; set; }
-        public decimal EMA_12 { get; set; }
-        public decimal EMA_20 { get; set; }
-        public decimal EMA_26 { get; set; }
-        public decimal EMA_50 { get; set; }    
-        public bool? EMA_5_Crossed_EMA_20_From_Below { get; set; }
-        public bool? EMA_5_Crossed_EMA_20_From_Above { get; set; }
-        public DateTimeOffset? EMA_5_Crossed_EMA_20_From_Below_Dt { get; set; }
-        public bool? EMA_12_Crossed_EMA_26_From_Below { get; set; }
-        public bool? EMA_12_Crossed_EMA_26_From_Above { get; set; }
-        public DateTimeOffset? EMA_12_Crossed_EMA_26_From_Below_Dt { get; set; }
-        public bool? EMA_20_Crossed_EMA_50_From_Below { get; set; }
-        public bool? EMA_20_Crossed_EMA_50_From_Above { get; set; }
-        public DateTimeOffset? EMA_20_Crossed_EMA_50_From_Below_Dt { get; set; }
-        public decimal EMA_Diff_5_20_pips { get; set; }
-        public decimal EMA_Diff_20_50_pips { get; set; }
+        public decimal EMA_50 { get; set; }
+        public bool? EMA_5_Crossed_EMA_10_From_Below { get; set; }
+        public bool? EMA_5_Crossed_EMA_10_From_Above { get; set; }
+        public bool? EMA_10_Crossed_EMA_50_From_Below { get; set; }
+        public bool? EMA_10_Crossed_EMA_50_From_Above { get; set; }
+        public bool? EMA_5_Crossed_EMA_50_From_Below { get; set; }
+        public bool? EMA_5_Crossed_EMA_50_From_Above { get; set; }
+        public DateTimeOffset? EMA_5_Crossed_EMA_10_From_Below_Dt { get; set; }
+        public DateTimeOffset? EMA_5_Crossed_EMA_10_From_Above_Dt { get; set; }
+        public DateTimeOffset? EMA_10_Crossed_EMA_50_From_Below_Dt { get; set; }
+        public DateTimeOffset? EMA_10_Crossed_EMA_50_From_Above_Dt { get; set; }
+        public DateTimeOffset? EMA_5_Crossed_EMA_50_From_Below_Dt { get; set; }
+        public DateTimeOffset? EMA_5_Crossed_EMA_50_From_Above_Dt { get; set; }
+        public decimal EMA_Diff_5_10_pips { get; set; }
+        public decimal EMA_Diff_10_50_pips { get; set; }
         public decimal EMA_Diff_5_50_pips { get; set; }
         public decimal RSI_14 { get; set; }
         public decimal Avg_Current_Gain_14 { get; set; }
         public decimal Avg_Current_Loss_14 { get; set; }
-        public DateTimeOffset? lastBuyTime { get; set; }
-        public decimal MACD_EMA12_EMA16_DIFF { get; set; }
     }   
 }
