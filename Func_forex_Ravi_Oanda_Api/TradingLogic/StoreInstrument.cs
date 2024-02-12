@@ -1,5 +1,6 @@
 ﻿using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
 using Func_forex_Ravi_Oanda_Api.Maps;
+using Func_forex_Ravi_Oanda_Api.Models;
 using Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables;
 using Func_forex_Ravi_Oanda_Api.Services;
 using Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators;
@@ -27,9 +28,8 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
             try
             {
                 var accountInstrumentDetail = await oandaApi.GetAccountInstrumentDetails(instrument_name);
-                var prevFxData = tableHelpers.GetPreviousEntities(instrument_name, 50);
-                List<FxCurrencyTable> fxdata = new List<FxCurrencyTable>();
-                if(prevFxData == null || !prevFxData.Any())
+                List<FxCurrencyTable> fxdata = tableHelpers.GetPreviousEntities(instrument_name, 1);
+                if(fxdata == null || !fxdata.Any())
                 {
                     // Load History
                     var priceHistory = await oandaApi.GetPriceHistory15Min(instrument_name);
@@ -41,12 +41,12 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                 {
                     // Get Latest
                     var priceLatest = await oandaApi.GetLatestPrice15Min(instrument_name);
-                    fxdata = priceLatest.TransformPricingLatestModelToFxCurrencyTable(accountInstrumentDetail);
-                    if (fxdata == null)
+                    var fx15mindata = priceLatest.TransformPricingLatestModelToFxCurrencyTable(accountInstrumentDetail);
+                    if (fx15mindata == null)
                         throw new Exception($"{instrument_name} No Latest Data Available");
                     else
-                    {
-                        fxdata.AddRange(prevFxData);
+                    { 
+                        fxdata.AddRange(fx15mindata);                        
                     }
                 }
 
@@ -71,7 +71,13 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                         fxdata[i].EMA_10 = EMAIndicator.CalculateEMA(previous.EMA_10 != 0 ? previous.EMA_10 : previous.SMA_10, fxdata[i].Price_Close, 10);
                         fxdata[i].EMA_50 = EMAIndicator.CalculateEMA(previous.EMA_50 != 0 ? previous.EMA_50 : previous.SMA_50, fxdata[i].Price_Close, 50);
                         fxdata[i] = current.DoEMATrendAnalysis(previous);
-                    }                    
+
+                        // Calculate RSI
+                        if (previous.Avg_Current_Gain_14 == 0 || previous.Avg_Current_Loss_14 == 0)
+                            (fxdata[i].Avg_Current_Gain_14, fxdata[i].Avg_Current_Loss_14) = RSIIndicator.GetRSI_AverageGainorLoss_14DayAvg(fxdata, i, 14);
+                        else
+                            (fxdata[i].RSI_14, fxdata[i].Avg_Current_Gain_14, fxdata[i].Avg_Current_Loss_14) = RSIIndicator.GetRSI_AverageGainorLoss_PreviousRSI(current, previous, 14);
+                    }
                 }
 
                 await tableHelpers.UpsertEntityAsync(fxdata);

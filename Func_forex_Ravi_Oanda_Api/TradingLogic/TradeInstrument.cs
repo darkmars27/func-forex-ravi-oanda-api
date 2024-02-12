@@ -15,6 +15,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
         private readonly ILogger<TradeInstrument> log;
         private readonly IOandaApi oandaApi;
         private readonly FxCurrencyTableHelpers tableHelpers;
+        decimal pip = 0.0001m;
         public TradeInstrument(ILogger<TradeInstrument> log, IOandaApi oandaApi)
         {
             this.log = log;
@@ -40,33 +41,30 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                     log.LogError($"{instrument_name} Skipping Trading As Failed To Read Account & Instrument Margin Rate");
                     return;
                 }
-
                 var fxdata = tableHelpers.GetPreviousEntities(instrument_name, 2);
                 fxdata = fxdata.OrderByDescending(o => o.RowKey).ToList();
                 var previous = fxdata[0];
                 var current = fxdata[1];
-                // Checking If ClosePrice, EMA 5, EMA_10 Cross EMA_50
-                current = current.DoEMATrendAnalysis(previous);
+                var latestPrice = await oandaApi.GetLatestPrice15Min(instrument_name);
                 if (account.openTradeCount > 0)
                 {
                     if (account.trades[0].instrument == instrument_name)
                     {
-                        if (current.EMA_5_Crossed_EMA_10_From_Above.GetValueOrDefault() ||
-                            current.EMA_10_Crossed_EMA_50_From_Above.GetValueOrDefault() ||
-                            current.EMA_5_Crossed_EMA_50_From_Above.GetValueOrDefault() ||
-                            Converters.GetCurrentEasternTime().Hour == 7)
-                        {
+                        if (current.EMA_5_Crossed_EMA_10_From_Above.GetValueOrDefault())
                             await oandaApi.PutCloseTradeRequest(instrument_name, account.trades[0].id);
-                        }
+                        else if (current.RSI_14 >= 70)
+                            await oandaApi.PutCloseTradeRequest(instrument_name, account.trades[0].id);
+                        else if(Converters.GetCurrentEasternTime().Hour == 7 && Converters.GetCurrentEasternTime().Minute > 30)
+                            await oandaApi.PutCloseTradeRequest(instrument_name, account.trades[0].id);
                     }
                 }
                 else
                 {
-                    if (current.Price_Close > current.EMA_50 &&
-                        current.EMA_5_Crossed_EMA_10_From_Below.GetValueOrDefault() &&
-                        current.EMA_10_Crossed_EMA_50_From_Below.GetValueOrDefault() &&
-                        current.EMA_5_Crossed_EMA_50_From_Below.GetValueOrDefault())
+                    if (current.EMA_5_Crossed_EMA_10_From_Below.GetValueOrDefault() && Converters.GetPips(current.EMA_5, current.EMA_10) >= 1)
                     {
+                        log.LogInformation($"EMA_5: {current.EMA_5}");
+                        log.LogInformation($"EMA_10: {current.EMA_10}");
+                        log.LogInformation($"Converters.GetPips(current.EMA_5, current.EMA_10): {Converters.GetPips(current.EMA_5, current.EMA_10)}");
                         bool skipMarketOrder = false;
                         var filledMarketOrders = await oandaApi.GetFilledMarketOrders(instrument_name);
                         if (filledMarketOrders != null && filledMarketOrders.orders != null && filledMarketOrders.orders.Any())
@@ -80,9 +78,9 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
 
                         if (!skipMarketOrder)
                         {
-                            var latestPrice = await oandaApi.GetLatestPrice15Min(instrument_name);
                             var current_ask_price = latestPrice.LatestCandles[0].Candles.OrderByDescending(o => o.Time).FirstOrDefault().Ask.C;
-                            var tradeId = await oandaApi.PostMarketOrderRequest(instrument_name, account.balance, current.Leverage.Value, current_ask_price);
+                            var current_close_price = latestPrice.LatestCandles[0].Candles.OrderByDescending(o => o.Time).FirstOrDefault().Ask.C;
+                            var tradeId = await oandaApi.PostMarketOrderRequest(instrument_name, account.balance, current.Leverage.Value, current_ask_price, current_close_price);
                             if(!string.IsNullOrEmpty(tradeId))
                                 await oandaApi.PostTrailingStopLossRequest(instrument_name, tradeId);
                         }

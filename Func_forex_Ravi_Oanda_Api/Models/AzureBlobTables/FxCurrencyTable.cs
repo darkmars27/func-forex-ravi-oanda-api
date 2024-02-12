@@ -48,9 +48,10 @@ namespace Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables
         public DateTimeOffset? EMA_10_Crossed_EMA_50_From_Above_Dt { get; set; }
         public DateTimeOffset? EMA_5_Crossed_EMA_50_From_Below_Dt { get; set; }
         public DateTimeOffset? EMA_5_Crossed_EMA_50_From_Above_Dt { get; set; }
-        public decimal EMA_Diff_5_10_pips { get; set; }
-        public decimal EMA_Diff_10_50_pips { get; set; }
-        public decimal EMA_Diff_5_50_pips { get; set; }
+        public decimal EMA_5_10_Spread { get; set; }
+        public decimal EMA_10_50_Spread { get; set; }
+        public decimal EMA_5_50_Spread { get; set; }
+
         public decimal RSI_14 { get; set; }
         public decimal Avg_Current_Gain_14 { get; set; }
         public decimal Avg_Current_Loss_14 { get; set; }

@@ -21,6 +21,7 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
         private readonly FxCurrencyTableHelpers tableHelpers;
         private readonly ILoggerFactory loggerFactory;
         private readonly StoreInstrument storeInstrument;
+        private readonly TradeInstrument tradeInstrument;
 
         public QuarterHourForexTradingFunction(ILogger<QuarterHourForexTradingFunction> log, IOandaApi oandaApi, ILoggerFactory loggerFactory)
         {
@@ -29,16 +30,17 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
             this.loggerFactory = loggerFactory;
             tableHelpers = new FxCurrencyTableHelpers("oandaforexdatademo");
             storeInstrument = new StoreInstrument(loggerFactory.CreateLogger<StoreInstrument>(), oandaApi);
+            tradeInstrument = new TradeInstrument(loggerFactory.CreateLogger<TradeInstrument>(), oandaApi);
         }
 
         [FunctionName("QuarterHourForexTradingFunction")]
-        public async Task Run([TimerTrigger("0 */15 * * * *")] TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0/30 * * * * *")] TimerInfo myTimer, ILogger log)
         {
             try
             {
                 log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
                 await storeInstrument.Run(Constants.EUR_USD);
-
+                await tradeInstrument.Run(Constants.EUR_USD);
             }
             catch (Exception ex)
             {

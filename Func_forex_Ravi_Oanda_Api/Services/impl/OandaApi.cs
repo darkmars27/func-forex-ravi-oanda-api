@@ -99,7 +99,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             return res;
         }
 
-        public async Task<string> PostMarketOrderRequest(string instrument_name, string cash, int leverage, decimal ask_close)
+        public async Task<string> PostMarketOrderRequest(string instrument_name, string cash, int leverage, decimal ask_close, decimal close_price)
         {
             var orderRequest = new MarketOrderRequest
             {
@@ -110,7 +110,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
                     units = Convert.ToInt32(decimal.Parse(cash) * leverage / ask_close),
                     stopLossOnFill = new MarketOrderRequest.StopLossOnFill
                     {
-                        price = (ask_close - pip * 10).ToString()
+                        price = (close_price - pip * 15).ToString()
                     }
                 }
             };
@@ -140,7 +140,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
                 {
                     type = "TRAILING_STOP_LOSS",
                     tradeID = tradeId,
-                    distance = (pip * 10).ToString(),
+                    distance = (pip * 15).ToString(),
                     timeInForce = "GTC"
                 }
             };

@@ -60,5 +60,10 @@ namespace Func_forex_Ravi_Oanda_Api.Helpers
             }
         }
 
+        public static decimal GetPips(decimal price1, decimal price2)
+        {
+            var difference = (price1 - price2) ;
+            return difference * 10000;
+        }
     }
 }
