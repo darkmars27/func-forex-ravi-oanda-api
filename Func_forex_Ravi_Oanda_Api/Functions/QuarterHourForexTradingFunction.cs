@@ -34,13 +34,13 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
         }
 
         [FunctionName("QuarterHourForexTradingFunction")]
-        public async Task Run([TimerTrigger("0/30 * * * * *")] TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0/15 * * * * *")] TimerInfo myTimer, ILogger log)
         {
             try
             {
                 log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
-                await storeInstrument.Run(Constants.EUR_USD);
-                await tradeInstrument.Run(Constants.EUR_USD);
+                var fxdata = await storeInstrument.Run(Constants.EUR_USD);
+                await tradeInstrument.Run(Constants.EUR_USD, fxdata);
             }
             catch (Exception ex)
             {

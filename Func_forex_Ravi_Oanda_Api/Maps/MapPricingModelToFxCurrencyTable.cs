@@ -15,7 +15,7 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
         {
             if (priceHistory != null && priceHistory.Candles != null && priceHistory.Candles.Any())
             {
-                priceHistory.Candles = priceHistory.Candles.Where(o => o.Complete).OrderBy(o => o.Time).ToList();
+                priceHistory.Candles = priceHistory.Candles.OrderBy(o => o.Time).ToList();
                 var result = priceHistory.Candles.Select(candle => new FxCurrencyTable
                 {
                     PartitionKey = priceHistory.Instrument,
@@ -46,7 +46,7 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
         {
             if (priceLatest != null && priceLatest.LatestCandles != null && priceLatest.LatestCandles.Any() && priceLatest.LatestCandles[0].Candles != null && priceLatest.LatestCandles[0].Candles.Any())
             {
-                priceLatest.LatestCandles[0].Candles = priceLatest.LatestCandles[0].Candles.Where(o => o.Complete).OrderBy(o => o.Time).ToList();
+                priceLatest.LatestCandles[0].Candles = priceLatest.LatestCandles[0].Candles.OrderBy(o => o.Time).ToList();
                 var result = priceLatest.LatestCandles[0].Candles.Select(candle => new FxCurrencyTable
                 {
                     PartitionKey = priceLatest.LatestCandles[0].Instrument,

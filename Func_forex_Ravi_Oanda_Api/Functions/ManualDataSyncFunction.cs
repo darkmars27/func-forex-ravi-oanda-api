@@ -46,8 +46,8 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
             var instrument_name = req.Query["instrument_name"];
             log.LogInformation($"QuarterHourForexTradingFunction function executed at: {DateTime.Now}");
 
-            await storeInstrument.Run(instrument_name);
-            await tradeInstrument.Run(instrument_name);
+            var fxdata = await storeInstrument.Run(instrument_name);
+            await tradeInstrument.Run(instrument_name, fxdata);
             return new OkObjectResult("done");
         }
     }

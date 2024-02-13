@@ -1,10 +1,12 @@
 ﻿using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
 using Func_forex_Ravi_Oanda_Api.Helpers;
 using Func_forex_Ravi_Oanda_Api.Models;
+using Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables;
 using Func_forex_Ravi_Oanda_Api.Services;
 using Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,7 +24,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
             this.oandaApi = oandaApi;
             tableHelpers = new FxCurrencyTableHelpers("oandaforexdatademo");
         }
-        public async Task Run(string instrument_name)
+        public async Task Run(string instrument_name, List<FxCurrencyTable> fxdata)
         {
             try
             {
@@ -41,11 +43,11 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                     log.LogError($"{instrument_name} Skipping Trading As Failed To Read Account & Instrument Margin Rate");
                     return;
                 }
-                var fxdata = tableHelpers.GetPreviousEntities(instrument_name, 2);
+                                
                 fxdata = fxdata.OrderByDescending(o => o.RowKey).ToList();
+                fxdata = fxdata.TakeLast(2).ToList();
                 var previous = fxdata[0];
                 var current = fxdata[1];
-                var latestPrice = await oandaApi.GetLatestPrice15Min(instrument_name);
                 if (account.openTradeCount > 0)
                 {
                     if (account.trades[0].instrument == instrument_name)
@@ -60,7 +62,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                 }
                 else
                 {
-                    if (current.EMA_5_Crossed_EMA_10_From_Below.GetValueOrDefault() && Converters.GetPips(current.EMA_5, current.EMA_10) >= 1)
+                    if (current.EMA_5_Crossed_EMA_10_From_Below.GetValueOrDefault() && Converters.GetPips(current.EMA_5, current.EMA_10) >= 1 && current.RSI_14 < 65)
                     {
                         log.LogInformation($"EMA_5: {current.EMA_5}");
                         log.LogInformation($"EMA_10: {current.EMA_10}");
@@ -78,9 +80,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
 
                         if (!skipMarketOrder)
                         {
-                            var current_ask_price = latestPrice.LatestCandles[0].Candles.OrderByDescending(o => o.Time).FirstOrDefault().Ask.C;
-                            var current_close_price = latestPrice.LatestCandles[0].Candles.OrderByDescending(o => o.Time).FirstOrDefault().Ask.C;
-                            var tradeId = await oandaApi.PostMarketOrderRequest(instrument_name, account.balance, current.Leverage.Value, current_ask_price, current_close_price);
+                            var tradeId = await oandaApi.PostMarketOrderRequest(instrument_name, account.balance, current.Leverage.Value, current.Ask_Close, current.Price_Close);
                             if(!string.IsNullOrEmpty(tradeId))
                                 await oandaApi.PostTrailingStopLossRequest(instrument_name, tradeId);
                         }

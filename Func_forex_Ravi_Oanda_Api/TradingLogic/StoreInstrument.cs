@@ -28,27 +28,10 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
             try
             {
                 var accountInstrumentDetail = await oandaApi.GetAccountInstrumentDetails(instrument_name);
-                List<FxCurrencyTable> fxdata = tableHelpers.GetPreviousEntities(instrument_name, 1);
-                if(fxdata == null || !fxdata.Any())
-                {
-                    // Load History
-                    var priceHistory = await oandaApi.GetPriceHistory15Min(instrument_name);
-                    fxdata = priceHistory.TransformPricingModelToFxCurrencyTable(accountInstrumentDetail);
-                    if (fxdata == null)
-                        throw new Exception($"{instrument_name} No History Available");
-                }
-                else
-                {
-                    // Get Latest
-                    var priceLatest = await oandaApi.GetLatestPrice15Min(instrument_name);
-                    var fx15mindata = priceLatest.TransformPricingLatestModelToFxCurrencyTable(accountInstrumentDetail);
-                    if (fx15mindata == null)
-                        throw new Exception($"{instrument_name} No Latest Data Available");
-                    else
-                    { 
-                        fxdata.AddRange(fx15mindata);                        
-                    }
-                }
+                var priceHistory = await oandaApi.GetPriceHistory15Min(instrument_name);
+                var fxdata = priceHistory.TransformPricingModelToFxCurrencyTable(accountInstrumentDetail);
+                if (fxdata == null)
+                    throw new Exception($"{instrument_name} No History Available");
 
                 // Run Indicators
                 fxdata = fxdata.OrderByDescending(o => o.RowKey).ToList();
@@ -80,7 +63,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                     }
                 }
 
-                await tableHelpers.UpsertEntityAsync(fxdata);
+                //await tableHelpers.UpsertEntityAsync(fxdata);
                 return fxdata;
             }
             catch (Exception ex) 

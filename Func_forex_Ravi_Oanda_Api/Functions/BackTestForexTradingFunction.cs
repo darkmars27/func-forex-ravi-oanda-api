@@ -59,8 +59,8 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
 
                 DateTime dateTime = DateTime.ParseExact("02/01/2024","MM/dd/yyyy",CultureInfo.InvariantCulture);
                 var dt_ticks = (DateTime.MaxValue.Ticks - dateTime.Ticks);
-                fxdata = fxdata.Where(o => long.Parse(o.RowKey) < dt_ticks).ToList();
-                //fxdata = fxdata.Where(o => o.RowKey == "2516945795999999999" || o.RowKey == "2516945804999999999" || o.RowKey == "2516945813999999999").ToList();
+                //fxdata = fxdata.Where(o => long.Parse(o.RowKey) < dt_ticks).ToList();
+                fxdata = fxdata.Where(o => o.RowKey == "2516945471999999999" || o.RowKey == "2516945480999999999").ToList();
 
                 bool isBrought = false;
                 DateTimeOffset? buyTime = DateTime.MinValue;
