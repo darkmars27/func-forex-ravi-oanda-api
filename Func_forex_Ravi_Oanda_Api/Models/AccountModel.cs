@@ -53,11 +53,13 @@ namespace Func_forex_Ravi_Oanda_Api.Models
         public string createTime { get; set; }
         public string type { get; set; }
         public string tradeID { get; set; }
+        public string distance { get; set; }
         public string price { get; set; }
         public string timeInForce { get; set; }
         public string triggerCondition { get; set; }
         public string triggerMode { get; set; }
         public string state { get; set; }
+        public string trailingStopValue { get; set; }
     }
 
     public class Position
@@ -87,6 +89,8 @@ namespace Func_forex_Ravi_Oanda_Api.Models
         public string realizedPL { get; set; }
         public string financing { get; set; }
         public string dividendAdjustment { get; set; }
+        public string stopLossOrderID { get; set; }
+        public string trailingStopLossOrderID { get; set; }
         public string unrealizedPL { get; set; }
         public string marginUsed { get; set; }
     }

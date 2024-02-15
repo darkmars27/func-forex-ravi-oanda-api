@@ -50,14 +50,30 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                 var current = fxdata[1];
                 if (account.openTradeCount > 0)
                 {
-                    if (account.trades[0].instrument == instrument_name)
+                    var trade = account.trades.Where(o => o.instrument == instrument_name).FirstOrDefault();
+                    if (trade != null)
                     {
                         if (current.EMA_5_Crossed_EMA_10_From_Above.GetValueOrDefault())
-                            await oandaApi.PutCloseTradeRequest(instrument_name, account.trades[0].id);
+                            await oandaApi.PutCloseTradeRequest(instrument_name, trade.id);
                         else if (current.RSI_14 >= 70)
-                            await oandaApi.PutCloseTradeRequest(instrument_name, account.trades[0].id);
-                        else if(Converters.GetCurrentEasternTime().Hour == 7 && Converters.GetCurrentEasternTime().Minute > 30)
-                            await oandaApi.PutCloseTradeRequest(instrument_name, account.trades[0].id);
+                            await oandaApi.PutCloseTradeRequest(instrument_name, trade.id);
+                        else if(Converters.GetCurrentEasternTime().Hour == 6 && Converters.GetCurrentEasternTime().Minute >= 45 && Converters.GetCurrentEasternTime().Minute <= 59)
+                            await oandaApi.PutCloseTradeRequest(instrument_name, trade.id);
+                        else
+                        {
+                            var trailingStopLossOrderID = trade.trailingStopLossOrderID;
+                            if(!string.IsNullOrEmpty(trailingStopLossOrderID))
+                            {
+                                var old_trailing_stoploss_distance = account.orders.Where(o => o.id == trailingStopLossOrderID).FirstOrDefault().distance;
+                                if (!string.IsNullOrEmpty(old_trailing_stoploss_distance))
+                                {
+                                    var stoploss_price = (current.EMA_10 - pip * 5);
+                                    var new_trailing_stoploss_distance = Math.Round(current.Price_Close - stoploss_price, 4);
+                                    if(new_trailing_stoploss_distance < decimal.Parse(old_trailing_stoploss_distance) && new_trailing_stoploss_distance >= pip * 5)
+                                        await oandaApi.PutTrailingStopLossRequest(instrument_name, trade.id, trailingStopLossOrderID, new_trailing_stoploss_distance);
+                                }
+                            }
+                        }
                     }
                 }
                 else
@@ -69,6 +85,13 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                         log.LogInformation($"Converters.GetPips(current.EMA_5, current.EMA_10): {Converters.GetPips(current.EMA_5, current.EMA_10)}");
                         bool skipMarketOrder = false;
                         var filledMarketOrders = await oandaApi.GetFilledMarketOrders(instrument_name);
+
+                        if (Converters.GetCurrentEasternTime().Hour == 7)
+                            skipMarketOrder = true;
+
+                        if (Converters.GetCurrentEasternTime().Hour == 6 && Converters.GetCurrentEasternTime().Minute >= 30 && Converters.GetCurrentEasternTime().Minute <= 59)
+                            skipMarketOrder = true;
+
                         if (filledMarketOrders != null && filledMarketOrders.orders != null && filledMarketOrders.orders.Any())
                         {
                             if (filledMarketOrders.orders.Any(o => o.createTime > current.EMA_5_Crossed_EMA_10_From_Below_Dt.GetValueOrDefault()))
@@ -78,11 +101,13 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                             }
                         }
 
-                        if (!skipMarketOrder)
+                        if (!skipMarketOrder && decimal.Parse(account.balance) > 0)
                         {
-                            var tradeId = await oandaApi.PostMarketOrderRequest(instrument_name, account.balance, current.Leverage.Value, current.Ask_Close, current.Price_Close);
-                            if(!string.IsNullOrEmpty(tradeId))
-                                await oandaApi.PostTrailingStopLossRequest(instrument_name, tradeId);
+                            var stoploss_price = Math.Round((current.EMA_10 - pip * 5), 5);
+                            var trailing_stoploss_distance = Math.Round(current.Price_Close - stoploss_price, 4);
+                            var tradeId = await oandaApi.PostMarketOrderRequest(instrument_name, account.balance, current.Leverage.Value, current.Ask_Close, current.Price_Close, stoploss_price);
+                            if(!string.IsNullOrEmpty(tradeId) && trailing_stoploss_distance >= pip * 5)
+                                await oandaApi.PostTrailingStopLossRequest(instrument_name, tradeId, trailing_stoploss_distance);
                         }
                     }
                 }
