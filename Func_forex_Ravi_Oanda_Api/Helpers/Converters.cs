@@ -65,5 +65,20 @@ namespace Func_forex_Ravi_Oanda_Api.Helpers
             var difference = (price1 - price2) ;
             return difference * 10000;
         }
+
+        public static int Get_Half_or_No_Units(int initial_units, int current_units)
+        {
+            try
+            {
+                if (current_units > 1)
+                    return (current_units / 2);
+
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
     }
 }

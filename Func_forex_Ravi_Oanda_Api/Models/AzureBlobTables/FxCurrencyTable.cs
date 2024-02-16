@@ -55,5 +55,7 @@ namespace Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables
         public decimal RSI_14 { get; set; }
         public decimal Avg_Current_Gain_14 { get; set; }
         public decimal Avg_Current_Loss_14 { get; set; }
+
+        public decimal profit_trade_price { get; set; }
     }   
 }

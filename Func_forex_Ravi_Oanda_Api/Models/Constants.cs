@@ -11,5 +11,7 @@ namespace Func_forex_Ravi_Oanda_Api.Models
         public static string EUR_USD = "EUR_USD";
         public static string AUD_USD = "AUD_USD";
         public static string GBP_USD = "GBP_USD";
+
+        public static int Total_Trading_Currencies = 3;
     }
 }

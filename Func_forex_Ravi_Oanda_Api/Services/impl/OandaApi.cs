@@ -99,7 +99,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             return res;
         }
 
-        public async Task<string> PostMarketOrderRequest(string instrument_name, string cash, int leverage, decimal ask_close, decimal close_price, decimal stop_loss_price)
+        public async Task<string> PostMarketOrderRequest(string instrument_name, decimal cash, int leverage, decimal ask_close, decimal close_price, decimal stop_loss_price)
         {
             var orderRequest = new MarketOrderRequest
             {
@@ -107,7 +107,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
                 {
                     type = "MARKET",
                     instrument = instrument_name,
-                    units = Convert.ToInt32(decimal.Parse(cash) * leverage / ask_close),
+                    units = Convert.ToInt32(cash * leverage / ask_close),
                     stopLossOnFill = new MarketOrderRequest.StopLossOnFill
                     {
                         price = stop_loss_price.ToString() //(close_price - pip * 15).ToString()
@@ -124,7 +124,7 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
                 var mrktOrderResponse = JsonConvert.DeserializeObject<MarketOrderResponse>(responseString);
                 if (mrktOrderResponse != null || !string.IsNullOrEmpty(mrktOrderResponse.orderFillTransaction?.id))
                 {
-                    log.LogInformation($"{instrument_name} New Market Order Placed, Trade ID: {mrktOrderResponse.orderFillTransaction?.id}");
+                    log.LogInformation($"{instrument_name} - {mrktOrderResponse.orderFillTransaction?.id} New Market Order Placed, Trade ID: {mrktOrderResponse.orderFillTransaction?.id}, Close/Ask Price: {close_price}/{ask_close}, Response : {responseString}");
                     return mrktOrderResponse.orderFillTransaction?.id;
                 }
             }
@@ -150,12 +150,12 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             using HttpResponseMessage response = await httpClient.PostAsync(url, stringContent);
             if (response.IsSuccessStatusCode)
             {
-                log.LogInformation($"{instrument_name} Trailing Stop Loss {trailingStopOrderRequest.order.distance} On TradeId {tradeId}");
+                log.LogInformation($"{instrument_name} - {tradeId} Trailing Stop Loss {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Response: {await TryReadAsStringAsync(response)}");
                 return true;
             }
             else
             {
-                log.LogError($"{instrument_name} Trailing Stop Loss Failed {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Response: {await TryReadAsStringAsync(response)}");
+                log.LogError($"{instrument_name} - {tradeId} Trailing Stop Loss Failed {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Response: {await TryReadAsStringAsync(response)}");
                 return false;
             }
         }
@@ -178,21 +178,50 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             using HttpResponseMessage response = await httpClient.PutAsync(url, stringContent);
             if (response.IsSuccessStatusCode)
             {
-                log.LogInformation($"{instrument_name} Trailing Stop Loss Updated {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Trailing Stop Loss OrderId {orderId}");
+                log.LogInformation($"{instrument_name} - {tradeId} Trailing Stop Loss Updated {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Trailing Stop Loss OrderId {orderId}, Response: {await TryReadAsStringAsync(response)}");
                 return true;
             }
             else
             {
-                log.LogError($"{instrument_name} Trailing Stop Loss Update Failed {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Trailing Stop Loss OrderId {orderId}, Response: {await TryReadAsStringAsync(response)}");
+                log.LogError($"{instrument_name} - {tradeId} Trailing Stop Loss Update Failed {trailingStopOrderRequest.order.distance} On TradeId {tradeId}, Trailing Stop Loss OrderId {orderId}, Response: {await TryReadAsStringAsync(response)}");
                 return false;
             }
         }
 
-        public async Task<bool> PutCloseTradeRequest(string instrument_name, string tradeId)
+
+        public async Task<bool> PutStopLossRequest(string instrument_name, string tradeId, string orderId, decimal price)
+        {
+            var stopOrderRequest = new StopLossRequest
+            {
+                order = new StopLossRequestOrder
+                {
+                    type = "STOP_LOSS",
+                    tradeID = tradeId,
+                    price = price.ToString("0.00000"),
+                    timeInForce = "GTC"
+                }
+            };
+
+            StringContent stringContent = new StringContent(JsonConvert.SerializeObject(stopOrderRequest), System.Text.Encoding.UTF8, "application/json");
+            string url = $"/v3/accounts/{accountId}/orders/{orderId}";
+            using HttpResponseMessage response = await httpClient.PutAsync(url, stringContent);
+            if (response.IsSuccessStatusCode)
+            {
+                log.LogInformation($"{instrument_name} - {tradeId} Stop Loss Updated {stopOrderRequest.order.price} On TradeId {tradeId}, Stop Loss OrderId {orderId}, Response: {await TryReadAsStringAsync(response)}");
+                return true;
+            }
+            else
+            {
+                log.LogError($"{instrument_name} - {tradeId} Stop Loss Update Failed {stopOrderRequest.order.price} On TradeId {tradeId}, Stop Loss OrderId {orderId}, Response: {await TryReadAsStringAsync(response)}");
+                return false;
+            }
+        }
+
+        public async Task<bool> PutCloseTradeRequest(string instrument_name, string tradeId, int units = 0)
         {
             var tradeCloseRequest = new TradeCloseRequest
             {
-                units = "ALL"
+                units =  units == 0 ? "ALL" : units.ToString()
             };
 
             StringContent stringContent = new StringContent(JsonConvert.SerializeObject(tradeCloseRequest), System.Text.Encoding.UTF8, "application/json");
@@ -200,12 +229,12 @@ namespace Func_forex_Ravi_Oanda_Api.Services.Impl
             using HttpResponseMessage response = await httpClient.PutAsync(url, stringContent);
             if (response.IsSuccessStatusCode)
             {
-                log.LogInformation($"{instrument_name}: {tradeId} Closed");
+                log.LogInformation($"{instrument_name} - {tradeId} Closed, Response: {await TryReadAsStringAsync(response)}");
                 return true;
             }
             else
             {
-                log.LogError($"{instrument_name}: {tradeId} Close Failed, Error: {await TryReadAsStringAsync(response)}");
+                log.LogError($"{instrument_name} - {tradeId} Close Failed, Error: {await TryReadAsStringAsync(response)}");
                 return false;
             }
         }
