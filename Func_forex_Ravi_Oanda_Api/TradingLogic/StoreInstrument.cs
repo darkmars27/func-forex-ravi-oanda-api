@@ -16,12 +16,10 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
     {
         private readonly ILogger<StoreInstrument> log;
         private readonly IOandaApi oandaApi;
-        private readonly FxCurrencyTableHelpers tableHelpers;
         public StoreInstrument(ILogger<StoreInstrument> log, IOandaApi oandaApi)
         {
             this.log = log;
             this.oandaApi = oandaApi;
-            tableHelpers = new FxCurrencyTableHelpers("oandaforexdatademo");
         }
         public async Task<List<FxCurrencyTable>> Run(string instrument_name)
         {

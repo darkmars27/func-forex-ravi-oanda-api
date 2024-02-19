@@ -36,7 +36,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators
             if (current.EMA_5 > current.EMA_10 && previous.EMA_5 < previous.EMA_10)
             {
                 current.EMA_5_Crossed_EMA_10_From_Below = true;
-                current.EMA_5_Crossed_EMA_10_From_Below_Dt = current.CurrencyDateTimeEST;
+                current.EMA_5_Crossed_EMA_10_From_Below_Dt = current.CurrencyDateTimeUTC;
                 current.EMA_5_Crossed_EMA_10_From_Above = false;
                 current.EMA_5_Crossed_EMA_10_From_Above_Dt = string.Empty.ConvertToDateTimeOffset();
             }
@@ -44,7 +44,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators
             if (current.EMA_5 < current.EMA_10 && previous.EMA_5 > previous.EMA_10)
             {
                 current.EMA_5_Crossed_EMA_10_From_Above = true;
-                current.EMA_5_Crossed_EMA_10_From_Above_Dt = current.CurrencyDateTimeEST;
+                current.EMA_5_Crossed_EMA_10_From_Above_Dt = current.CurrencyDateTimeUTC;
                 current.EMA_5_Crossed_EMA_10_From_Below = false;
                 current.EMA_5_Crossed_EMA_10_From_Below_Dt = string.Empty.ConvertToDateTimeOffset();
             }
@@ -52,7 +52,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators
             if (current.EMA_10 > current.EMA_50 && previous.EMA_10 < previous.EMA_50)
             {
                 current.EMA_10_Crossed_EMA_50_From_Below = true;
-                current.EMA_10_Crossed_EMA_50_From_Below_Dt = current.CurrencyDateTimeEST;
+                current.EMA_10_Crossed_EMA_50_From_Below_Dt = current.CurrencyDateTimeUTC;
                 current.EMA_10_Crossed_EMA_50_From_Above = false;
                 current.EMA_10_Crossed_EMA_50_From_Above_Dt = string.Empty.ConvertToDateTimeOffset();
             }
@@ -60,7 +60,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators
             if (current.EMA_10 < current.EMA_50 && previous.EMA_10 > previous.EMA_50)
             {
                 current.EMA_10_Crossed_EMA_50_From_Above = true;
-                current.EMA_10_Crossed_EMA_50_From_Above_Dt = current.CurrencyDateTimeEST;
+                current.EMA_10_Crossed_EMA_50_From_Above_Dt = current.CurrencyDateTimeUTC;
                 current.EMA_10_Crossed_EMA_50_From_Below = false;
                 current.EMA_10_Crossed_EMA_50_From_Below_Dt = string.Empty.ConvertToDateTimeOffset();
             }
@@ -68,7 +68,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators
             if (current.EMA_5 > current.EMA_50 && previous.EMA_5 < previous.EMA_50)
             {
                 current.EMA_5_Crossed_EMA_50_From_Below = true;
-                current.EMA_5_Crossed_EMA_50_From_Below_Dt = current.CurrencyDateTimeEST;
+                current.EMA_5_Crossed_EMA_50_From_Below_Dt = current.CurrencyDateTimeUTC;
                 current.EMA_5_Crossed_EMA_50_From_Above = false;
                 current.EMA_5_Crossed_EMA_50_From_Above_Dt = string.Empty.ConvertToDateTimeOffset();
             }
@@ -76,7 +76,7 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic.Indicators
             if (current.EMA_5 < current.EMA_50 && previous.EMA_5 > previous.EMA_50)
             {
                 current.EMA_5_Crossed_EMA_50_From_Above = true;
-                current.EMA_5_Crossed_EMA_50_From_Above_Dt = current.CurrencyDateTimeEST;
+                current.EMA_5_Crossed_EMA_50_From_Above_Dt = current.CurrencyDateTimeUTC;
                 current.EMA_5_Crossed_EMA_50_From_Below = false;
                 current.EMA_5_Crossed_EMA_50_From_Below_Dt = string.Empty.ConvertToDateTimeOffset();
             }

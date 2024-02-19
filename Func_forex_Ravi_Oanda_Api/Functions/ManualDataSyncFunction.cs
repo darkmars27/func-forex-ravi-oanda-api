@@ -19,20 +19,15 @@ namespace Func_forex_Ravi_Oanda_Api.Functions
     public class ManualDataSyncFunction
     {
         private readonly ILogger<ManualDataSyncFunction> log;
-        private readonly IOandaApi oandaApi;
-        private readonly FxCurrencyTableHelpers tableHelpers;
-        private readonly ILoggerFactory loggerFactory;
         private readonly StoreInstrument storeInstrument;
         private readonly TradeInstrument tradeInstrument;
 
         public ManualDataSyncFunction(ILogger<ManualDataSyncFunction> log, IOandaApi oandaApi, ILoggerFactory loggerFactory)
         {
             this.log = log;
-            this.oandaApi = oandaApi;
-            this.loggerFactory = loggerFactory;
-            tableHelpers = new FxCurrencyTableHelpers("oandaforexdatademo");
+            var fxTradeTableHelpers = new FxTradeTableHelpers();
             storeInstrument = new StoreInstrument(loggerFactory.CreateLogger<StoreInstrument>(), oandaApi);
-            tradeInstrument = new TradeInstrument(loggerFactory.CreateLogger<TradeInstrument>(), oandaApi);
+            tradeInstrument = new TradeInstrument(loggerFactory.CreateLogger<TradeInstrument>(), oandaApi, fxTradeTableHelpers);
         }
 
         [FunctionName("ManualDataSyncFunction")]

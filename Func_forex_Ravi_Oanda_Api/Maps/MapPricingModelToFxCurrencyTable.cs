@@ -72,5 +72,37 @@ namespace Func_forex_Ravi_Oanda_Api.Maps
             else
                 return null;
         }
+
+        public static FxTradeTable TransformTradeToFxTradeTable(this Trade trade)
+        {
+            if(trade != null)
+            {
+                TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+
+                var openTime = DateTime.Parse(trade.openTime).ToUniversalTime();
+                openTime = DateTime.SpecifyKind(openTime, DateTimeKind.Utc);
+                var result = new FxTradeTable
+                {
+                    PartitionKey = trade.instrument,
+                    RowKey = (DateTime.MaxValue.Ticks - openTime.Ticks).ToString(),
+                    Id = trade.id,
+                    currentUnits = trade.currentUnits,
+                    initialMarginRequired = trade.initialMarginRequired,
+                    initialUnits = trade.initialUnits,
+                    Instrument = trade.instrument,
+                    marginUsed = trade.marginUsed,
+                    openTimeUTC = trade.openTime,
+                    openTimeEST = TimeZoneInfo.ConvertTimeFromUtc(openTime, easternZone).ToString(),
+                    Price = trade.price,
+                    state = trade.state,
+                    stopLossOrderID = trade.stopLossOrderID,
+                    trailingStopLossOrderID = trade.trailingStopLossOrderID,
+                    unrealizedPL = trade.unrealizedPL
+                };
+
+                return result;
+            }
+            return null;
+        }
     }
 }

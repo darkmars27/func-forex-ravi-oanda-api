@@ -1,5 +1,6 @@
 ﻿using Func_forex_Ravi_Oanda_Api.Azure.BlobStorage;
 using Func_forex_Ravi_Oanda_Api.Helpers;
+using Func_forex_Ravi_Oanda_Api.Maps;
 using Func_forex_Ravi_Oanda_Api.Models;
 using Func_forex_Ravi_Oanda_Api.Models.AzureBlobTables;
 using Func_forex_Ravi_Oanda_Api.Services;
@@ -17,13 +18,13 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
     {
         private readonly ILogger<TradeInstrument> log;
         private readonly IOandaApi oandaApi;
-        private readonly FxCurrencyTableHelpers tableHelpers;
+        private readonly FxTradeTableHelpers fxTradeTableHelpers;
         decimal pip = 0.0001m;
-        public TradeInstrument(ILogger<TradeInstrument> log, IOandaApi oandaApi)
+        public TradeInstrument(ILogger<TradeInstrument> log, IOandaApi oandaApi, FxTradeTableHelpers fxTradeTableHelpers)
         {
             this.log = log;
             this.oandaApi = oandaApi;
-            tableHelpers = new FxCurrencyTableHelpers("oandaforexdatademo");
+            this.fxTradeTableHelpers = fxTradeTableHelpers;
         }
         public async Task Run(string instrument_name, List<FxCurrencyTable> fxdata)
         {
@@ -51,12 +52,16 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                 var current = fxdata[1];
 
                 Trade trade = null;
-                
+
                 if (account.openTradeCount > 0)
+                {
                     trade = account.trades.Where(o => o.instrument == instrument_name).FirstOrDefault();
+                }
 
                 if (trade != null)
                 {
+                    await fxTradeTableHelpers.UpsertEntityAsync(trade.TransformTradeToFxTradeTable());
+
                     var current_trade_price = decimal.Parse(trade.price);
                     var profit_trade_price_5_pips = current_trade_price + (pip * 5);
                     var profit_trade_price_10_pips = current_trade_price + (pip * 10);
@@ -107,31 +112,55 @@ namespace Func_forex_Ravi_Oanda_Api.TradingLogic
                 }
                 else
                 {
-                    if (current.EMA_5_Crossed_EMA_10_From_Below.GetValueOrDefault() && Converters.GetPips(current.EMA_5, current.EMA_10) >= 1 && current.RSI_14 <= 66)
+                    if (current.EMA_5_Crossed_EMA_10_From_Below.GetValueOrDefault() && 
+                        (Converters.GetPips(current.EMA_5, current.EMA_10) >= 0.5m || 
+                        (Converters.GetPips(previous.EMA_5, previous.EMA_10) >= 0.1m)))
                     {
-                        log.LogInformation($"EMA_5: {current.EMA_5}");
-                        log.LogInformation($"EMA_10: {current.EMA_10}");
-                        log.LogInformation($"Converters.GetPips(current.EMA_5, current.EMA_10): {Converters.GetPips(current.EMA_5, current.EMA_10)}");
+                        var prevTradeList = fxTradeTableHelpers.GetPreviousEntities(instrument_name, 20);
+
+                        log.LogInformation($"EMA_5: {current.EMA_5}, EMA_10: {current.EMA_10}, EMA5_10_Spread: {Converters.GetPips(current.EMA_5, current.EMA_10)}, EMA_5_Crossed_EMA_10_From_Below_Dt : {current.EMA_5_Crossed_EMA_10_From_Below_Dt.GetValueOrDefault()}");
                         bool skipMarketOrder = false;
-                        var filledMarketOrders = await oandaApi.GetFilledMarketOrders(instrument_name);
+                        //var filledMarketOrders = await oandaApi.GetFilledMarketOrders(instrument_name);
+
+
 
                         if (Converters.GetCurrentEasternTime().Hour == 7)
+                        {
+                            log.LogInformation("Skip Order It is Eastern Hour 7. High chance of market to crash when market opens at eastern hour");
                             skipMarketOrder = true;
+                        }
 
                         if (Converters.GetCurrentEasternTime().Hour == 6 && Converters.GetCurrentEasternTime().Minute >= 30 && Converters.GetCurrentEasternTime().Minute <= 59)
-                            skipMarketOrder = true;
-
-                        if (filledMarketOrders != null && filledMarketOrders.orders != null && filledMarketOrders.orders.Any())
                         {
-                            if (filledMarketOrders.orders.Any(o => o.createTime > current.EMA_5_Crossed_EMA_10_From_Below_Dt.GetValueOrDefault()))
+                            log.LogInformation("Skip Order It is Eastern Hour 6:30 - 6:59. High chance of market to crash when market opens at eastern hour");
+                            skipMarketOrder = true;
+                        }
+
+                        //if (filledMarketOrders != null && filledMarketOrders.orders != null && filledMarketOrders.orders.Any())
+                        //{
+                        //    if (filledMarketOrders.orders.Any(o => o.createTime > current.EMA_5_Crossed_EMA_10_From_Below_Dt.GetValueOrDefault()))
+                        //    {
+                        //        skipMarketOrder = true;
+                        //        log.LogInformation($"{instrument_name} Skipping Market Order (Second Market Order In Same EMA Cross)");
+                        //    }
+                        //}
+
+
+                        if (prevTradeList != null && prevTradeList.Any())
+                        {
+                            log.LogInformation($"Previous Trade Open Time UTC: {DateTime.Parse(prevTradeList[0].openTimeUTC)}");
+                            if (prevTradeList.Any(o => DateTimeOffset.Parse(o.openTimeUTC).DateTime >= current.EMA_5_Crossed_EMA_10_From_Below_Dt.GetValueOrDefault().DateTime))
                             {
                                 skipMarketOrder = true;
                                 log.LogInformation($"{instrument_name} Skipping Market Order (Second Market Order In Same EMA Cross)");
                             }
                         }
 
-                        if((current.CurrencyDateTimeEST - current.EMA_5_Crossed_EMA_10_From_Below_Dt).Value.Minutes > 60)
-                            skipMarketOrder= true;
+                        if ((current.CurrencyDateTimeUTC - current.EMA_5_Crossed_EMA_10_From_Below_Dt).Value.Minutes > 60)
+                        { 
+                            skipMarketOrder = true;
+                            log.LogInformation("Skip Order EMA 5 - 10 Cross Occured More than 60 min ago");
+                        }
 
                         if (!skipMarketOrder && decimal.Parse(account.marginAvailable) > 0)
                         {
